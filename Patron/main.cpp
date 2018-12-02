@@ -78,7 +78,6 @@ public:
     Point( int  &_x,  int  &_y){ x=(T)_x; y=(T)_y;} 
     Point(uchar &_x, uchar &_y){ x=(T)_x; y=(T)_y;} 
 
-
     void distance(const Point& p, T &d);
     T    distance(const Point& p);
 };
@@ -151,10 +150,12 @@ int main( int argc, char** argv ) {
  */
     cv::Mat src;
     src = cv::imread("patron.png" , CV_LOAD_IMAGE_COLOR);
+    int n_rows = src.rows;
+    int n_cols = src.cols;
 
     if(! src.data ) {
-    std::cout <<  "Could not open or find the image" << std::endl ;
-    return -1;
+        std::cout <<  "Could not open or find the image" << std::endl ;
+        return -1;
     }
 
 /*
@@ -183,16 +184,31 @@ int main( int argc, char** argv ) {
  *  -------
  */ 
     T mod;
-    std::vector<T> a;
+    //T x,y;
+    T x_cols,y_rows;
+    std::vector<T> a(circles.size()) , b(circles.size()),
+                   c(circles.size()) , d(circles.size()) ;
     for( int i = 0; i < circles.size(); i++ ){
+        x = centers[i].x;
+        y = centers[i].y;
         
-        
-        
-        mod = centers[i].norm();
-        std::cout << "P: (" << centers[i].x << "," << centers[i].y << ") -> norm = " << mod << std::endl;
+        x_cols = n_cols - x;
+        y_rows = n_rows - y;
+
+        a[i] = x     *x      + y     *y     ;
+        b[i] = x     *x      + y_rows*y_rows;
+        c[i] = x_cols*x_cols + y     *y     ;
+        d[i] = x_cols*x_cols + y_rows*y_rows;
     }
 
     
+
+
+    std::cout << "Cucaracha:";// 
+    auto laura = std::min_element( a.begin(), a.end() ) - a.begin();
+    std::cout <<  laura << std::endl;
+    std::cout << laura << std::endl;//
+
     for( size_t i = 0; i < circles.size(); i++ ){
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
