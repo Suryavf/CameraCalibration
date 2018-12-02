@@ -244,8 +244,6 @@ int main()
 	//imshow( "Display window", sobel_image);
 
   	Mat hough_image = hough_transform(colored_image);
-
-    // Show your results
   	namedWindow("Circle Detector", CV_WINDOW_AUTOSIZE);
   	imshow("Circle Detector", hough_image);
 
