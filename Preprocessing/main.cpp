@@ -1,3 +1,8 @@
+/*
+	To compile: g++ main.cpp -o main `pkg-config --cflags --libs opencv`&& ./main
+
+*/
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc.hpp"
