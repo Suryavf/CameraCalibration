@@ -334,6 +334,26 @@ int main( int argc, char** argv ) {
         patron[i+1][0] = pts[i];
     }
 
+/*
+ *  Main Loop
+ *  ---------
+ */ 
+    Line L;
+    for(uint i = 1; i<n_rows-1; ++i){
+        L = Line(patron[i][0],patron[i][n_cols-1]);
+
+        for(uint j = 0; j<pts.size(); ++j) distance(pts[j], L, pts[j].d);
+        std::sort(pts.begin(),pts.end(),sortDistance);
+        std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
+
+        for(uint j = 0; j<n_cols-2; ++j){
+            pts[j].check = True;
+            patron[i][j+1] = pts[j];
+        }
+    }
+
+
+
     /*
     std::cout << "Cucaracha:";// 
     auto laura = std::min_element( a.begin(), a.end() ) - a.begin();
