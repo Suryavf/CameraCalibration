@@ -81,10 +81,10 @@ public:
     T        d;
 
     // Constructors
-    Point(){x=0;y=0;}
-    Point(  T   &_x,   T   &_y){ x=   _x; y=   _y;} 
-    Point( int  &_x,  int  &_y){ x=(T)_x; y=(T)_y;} 
-    Point(uchar &_x, uchar &_y){ x=(T)_x; y=(T)_y;} 
+    Point() : check(false) {x=0;y=0;}
+    Point(  T   &_x,   T   &_y) : check(false) { x=   _x; y=   _y;} 
+    Point( int  &_x,  int  &_y) : check(false) { x=(T)_x; y=(T)_y;} 
+    Point(uchar &_x, uchar &_y) : check(false) { x=(T)_x; y=(T)_y;} 
 
     void distance(const Point& p, T &d);
     T    distance(const Point& p);
@@ -167,6 +167,17 @@ void distance(Point &p, Line &l, T &d){
 
 bool sortCondition(const std::pair<int,bool> &a, const std::pair <int,bool> &b){
     return ( a.second && (a.first < b.first) );
+}
+
+
+bool sortDistance(const Point &a, const Point &b){
+    return ( a.d < b.d );
+}
+bool sortX(const Point &a, const Point &b){
+    return ( a.x < b.x );
+}
+bool sortY(const Point &a, const Point &b){
+    return ( a.y < b.y );
 }
 
 
@@ -260,14 +271,68 @@ int main( int argc, char** argv ) {
     std::sort(dL2p.begin(),dL2p.end());
 
     T sumDL1p = 0, sumDL2p = 0;
-    for(uint i = 0; i<LEN_X; ++i){ sumDL1p += dL1p[i].first; }
-    for(uint i = 0; i<LEN_X; ++i){ sumDL2p += dL2p[i].first; }
+    for(uint i = 0; i<LEN_X-2; ++i){ 
+        sumDL1p      += dL1p[i].first; 
+        dL1p[i].first = (T)pts[dL1p[i].second].x; 
+    }
+    for(uint i = 0; i<LEN_X-2; ++i){ 
+        sumDL2p      += dL2p[i].first; 
+        dL2p[i].first = (T)pts[dL2p[i].second].y; 
+    }
 
     uint n_rows, n_cols;
     if( sumDL1p<sumDL2p ){ n_rows = LEN_Y; n_cols = LEN_X;}
     else                 { n_rows = LEN_X; n_cols = LEN_Y;} 
 
+    std::sort(dL1p.begin(),dL1p.begin()+n_cols-2); // Sort x
+    std::sort(dL2p.begin(),dL2p.begin()+n_rows-2); // Sort y
+
+/*
+ *  Points Array
+ *  ------------
+ */ 
+    std::vector< std::vector<Point> > patron(n_rows, std::vector<Point>(n_cols));
+    patron[    0   ][    0   ] = pts[a_corner];
+    patron[n_rows-1][    0   ] = pts[b_corner];
+    patron[    0   ][n_cols-1] = pts[c_corner];
+    patron[n_rows-1][n_cols-1] = pts[d_corner];
+
+    uint id;
+    for(uint i = 1; i<n_cols-1; ++i){
+        id = dL1p[i].second;
+        pts[id].check = True;
+        patron[0][i] = pts[id];
+    }
+    for(uint j = 1; j<n_rows-1; ++j){ 
+        id = dL2p[j].second;
+        pts[id].check = True;
+        patron[i][0] = pts[id];
+    }
+
+/*
+ *  Two more
+ *  --------
+ */ 
+    Line L3 = Line(pts[b_corner],pts[d_corner]);
+    Line L4 = Line(pts[c_corner],pts[d_corner]);
+
+    for(uint i = 0; i<pts.size(); ++i) distance(pts[i], L3, pts[i].d);
+    std::sort(pts.begin(),pts.end(),sortDistance);
+    std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
     
+    for(uint i = 0; i<n_cols-2; ++i){
+        pts[i].check = True;
+        patron[0][i+1] = pts[i];
+    }
+
+    for(uint i = 0; i<pts.size(); ++i) distance(pts[i], L4, pts[i].d);
+    std::sort(pts.begin(),pts.end(),sortDistance);
+    std::sort(pts.begin(),pts.begin()+n_rows-2,sortY);
+    
+    for(uint i = 0; i<n_rows-2; ++i){
+        pts[i].check = True;
+        patron[i+1][0] = pts[i];
+    }
 
     /*
     std::cout << "Cucaracha:";// 
