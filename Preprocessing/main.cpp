@@ -372,6 +372,114 @@ void hough_transform_from_video(string name_video)
 }
 
 
+RNG rng(12345);
+void find_rings(string name_video)
+{
+
+	//Variables to store  from the video , and a converted version of the video
+	Mat coloredimage;
+	Mat grayimage;
+	Mat threshold_output; // binarized image
+  	vector<vector<Point> > contours; //contours (elipses)
+  	vector<Vec4i> hierarchy; // 
+  	Mat drawing;
+  	Scalar color;
+
+
+  	float x_t0, y_t0;
+  	float x_t1, y_t1;
+  	float holgura = 1;
+  	float distance;
+  	int counter = 0;
+
+
+	//auxiliar variable to quit the loop and end the program
+	char key = 0;
+
+	VideoCapture capture(name_video);
+
+	//Check for Failure
+	if (!capture.isOpened())
+	{
+		//printf("Failed to open the webcam");
+		printf("Failed to open the video");
+	}
+
+	//Set Capture device properties.
+	capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+	capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+
+
+	//Loop will stop if "q" is pressed in the keyboard
+	while (key != 'q')
+	{
+
+		//Capture a frame of the webcam live video and store it on the image variable
+		capture >> coloredimage;
+
+		//Resize this frame and convert to gray scale
+		cvtColor(coloredimage, grayimage, CV_BGR2GRAY);
+		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
+
+		/// Detect edges using Threshold
+  		threshold( grayimage, threshold_output, 100, 255, THRESH_BINARY );
+  		imshow("Binarized Image", threshold_output);
+  		
+  		/// Find contours
+  		findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+		/// Find the  ellipses for each contour
+		vector<RotatedRect> minEllipse( contours.size() );
+
+  		for( int i = 0; i < contours.size(); i++ )
+     	{ 
+     		
+       		if( contours[i].size() > 5 )
+         	{ 
+         		minEllipse[i] = fitEllipse( Mat(contours[i]) ); 
+         	}
+     	}
+
+  		/// Draw contours + rotated rects + ellipses
+  		drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
+  		cout <<"number of elipses: "<<contours.size()<<endl;
+  		
+  		for( int i = 0; i< contours.size()-1; i++ )
+     	{
+       		color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+       		
+       		// contour
+       		//drawContours( drawing, contours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+       		
+       		// ellipse
+       		x_t0 = minEllipse[i].center.x;
+       		y_t0 = minEllipse[i].center.y;
+
+       		x_t1 = minEllipse[i+1].center.x;
+       		y_t1 = minEllipse[i+1].center.y;
+
+       		distance = sqrt(pow(x_t0 - x_t1, 2) + pow(y_t0 - y_t1, 2));
+
+       		if(distance <= holgura)
+	       	{
+	       		ellipse( drawing, minEllipse[i], color, 2, 8 );
+	       		ellipse( drawing, minEllipse[i+1], color, 2, 8 );
+	       		counter++;
+	       	}
+     	}
+
+     	cout<<"Number of ellipses: "<<counter<<endl;
+     	counter = 0;
+
+     	namedWindow("HELLO", CV_WINDOW_AUTOSIZE);
+		imshow("HELLO", drawing);
+
+		key = waitKey(0);
+
+	}
+
+}
+
 
 int main()
 {
@@ -401,15 +509,17 @@ int main()
 
   	//string name_video = "calibration_kinectv2.avi";
   	//string name_video = "PadronAnillos_01.avi";
-  	string name_video = "PadronAnillos_02.avi";
+  	//string name_video = "PadronAnillos_02.avi";
   	//string name_video = "PadronAnillos_03.avi";
-	hough_transform_from_video(name_video);
+	//hough_transform_from_video(name_video);
 
+
+	string name_video = "PadronAnillos_03.avi";
+	find_rings(name_video);
 
 
     waitKey(0);                                        // Wait for a keystroke in the window
     return 0;
 }
-
 
 
