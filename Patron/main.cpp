@@ -1,10 +1,14 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <math.h>
- 
+#include <limits>
+
 typedef float T;
 typedef unsigned char uchar;
 typedef unsigned  int uint ;
+
+uint LEN_X = 6;
+uint LEN_Y = 5;
 
 /*
  * Class Vect
@@ -74,6 +78,7 @@ class Point : public Vect{
 public:
     // Parameters
     bool check;
+    T        d;
 
     // Constructors
     Point(){x=0;y=0;}
@@ -96,6 +101,22 @@ T    Point::distance(const Point& p){
     T b = this->y - p.y;
     
     return std::sqrt( a*a + b*b );
+}
+
+class Points{
+public:
+    Points(uint n){ data = std::std::vector< Point >(n);  }
+
+protected:
+    std::std::vector< Point > data;
+
+private:
+    bool sortCondition(const Point &a, const Point &b);
+
+};
+
+bool Points::sortCondition(const Point &a, const Point &b){
+    return ( a.second && (a.first < b.first) );
 }
 
 
@@ -140,7 +161,8 @@ T    Line::eval(const Point &p){
  *            ||w||
  */
 void distance(Point &p, Line &l, T &d){
-    d = abs( l.eval(p) ); // w = 1
+    if (p.check) d = abs( l.eval(p) ); // w = 1
+    else         d = std::numeric_limits<T>::max();
 }
 
 bool sortCondition(const std::pair<int,bool> &a, const std::pair <int,bool> &b){
@@ -180,9 +202,12 @@ int main( int argc, char** argv ) {
 
     Point *centers;
     centers = new Point[circles.size()];
+
+    std::std::vector<Point> pts(circles.size());
+
     T x,y;
-    for( int i = 0; i < circles.size(); i++ ){
-        centers[i] = Point(circles[i][0],circles[i][1]);
+    for( int i = 0; i < pts.size(); i++ ){
+        pts[i] = Point(circles[i][0],circles[i][1]);
     }
 /*
  *  Corners
@@ -194,8 +219,8 @@ int main( int argc, char** argv ) {
     std::vector<T> a(circles.size()) , b(circles.size()),
                    c(circles.size()) , d(circles.size()) ;
     for( int i = 0; i < circles.size(); i++ ){
-        x = centers[i].x;
-        y = centers[i].y;
+        x = pts[i].x;
+        y = pts[i].y;
         
         x_cols = n_cols - x;
         y_rows = n_rows - y;
@@ -211,12 +236,46 @@ int main( int argc, char** argv ) {
     auto c_corner = std::min_element( c.begin(), c.end() ) - c.begin();
     auto d_corner = std::min_element( d.begin(), d.end() ) - d.begin();
 
+    pts[a_corner].check = true;
+    pts[b_corner].check = true;
+    pts[c_corner].check = true;
+    pts[d_corner].check = true;
 
+    Line L1 = Line(pts[a_corner],pts[c_corner]);
+    Line L2 = Line(pts[a_corner],pts[b_corner]);
+
+    std::vector< std::pair <T,uint> > dL1p(pts.size());
+    std::vector< std::pair <T,uint> > dL2p(pts.size());
+
+    T dist;
+    for(uint i = 0; i<pts.size(); ++i){
+        distance(pts[i], L1, dist);
+        dL1p.push_back( std::make_pair(dist,i) );
+
+        distance(pts[i], L2, dist);
+        dL2p.push_back( std::make_pair(dist,i) );
+    }
+
+    std::sort(dL1p.begin(),dL1p.end());
+    std::sort(dL2p.begin(),dL2p.end());
+
+    T sumDL1p = 0, sumDL2p = 0;
+    for(uint i = 0; i<LEN_X; ++i){ sumDL1p += dL1p[i].first; }
+    for(uint i = 0; i<LEN_X; ++i){ sumDL2p += dL2p[i].first; }
+
+    uint n_rows, n_cols;
+    if( sumDL1p<sumDL2p ){ n_rows = LEN_Y; n_cols = LEN_X;}
+    else                 { n_rows = LEN_X; n_cols = LEN_Y;} 
+
+    
+
+    /*
     std::cout << "Cucaracha:";// 
     auto laura = std::min_element( a.begin(), a.end() ) - a.begin();
     std::cout <<  laura << std::endl;
     std::cout << laura << std::endl;//
-
+    */
+    /*
     for( size_t i = 0; i < circles.size(); i++ ){
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
@@ -226,7 +285,9 @@ int main( int argc, char** argv ) {
         // circle outline
         circle( src, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
     }
-    
+    */
+
+    /*
     std::vector< std::pair <int,bool> > test;
     test.push_back( std::make_pair(5,false) );
     test.push_back( std::make_pair(3,true) );
@@ -240,16 +301,18 @@ int main( int argc, char** argv ) {
     for(int i =0; i<test.size();++i){
         std::cout << "[" << test[i].first << "," << test[i].second << "]" << std::endl;
     }
-
+    */
 
 
 /*
  *  Display image
  *  -------------  
  */
+    /*
     cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );
     cv::imshow( "Display window", src );
 
     cv::waitKey(0);
+    */
     return 0;
 }
