@@ -72,6 +72,9 @@ T    Vect::dot(const Vect& p){
  */
 class Point : public Vect{
 public:
+    // Parameters
+    bool check;
+
     // Constructors
     Point(){x=0;y=0;}
     Point(  T   &_x,   T   &_y){ x=   _x; y=   _y;} 
@@ -140,7 +143,9 @@ void distance(Point &p, Line &l, T &d){
     d = abs( l.eval(p) ); // w = 1
 }
 
-
+bool sortCondition(const std::pair<int,bool> &a, const std::pair <int,bool> &b){
+    return ( a.second && (a.first < b.first) );
+}
 
 
 int main( int argc, char** argv ) {
@@ -201,7 +206,10 @@ int main( int argc, char** argv ) {
         d[i] = x_cols*x_cols + y_rows*y_rows;
     }
 
-    
+    auto a_corner = std::min_element( a.begin(), a.end() ) - a.begin();
+    auto b_corner = std::min_element( b.begin(), b.end() ) - b.begin();
+    auto c_corner = std::min_element( c.begin(), c.end() ) - c.begin();
+    auto d_corner = std::min_element( d.begin(), d.end() ) - d.begin();
 
 
     std::cout << "Cucaracha:";// 
@@ -219,6 +227,19 @@ int main( int argc, char** argv ) {
         circle( src, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
     }
     
+    std::vector< std::pair <int,bool> > test;
+    test.push_back( std::make_pair(5,false) );
+    test.push_back( std::make_pair(3,true) );
+    test.push_back( std::make_pair(2,true) );
+    test.push_back( std::make_pair(4,true) );
+    test.push_back( std::make_pair(0,false) );
+
+
+    std::sort(test.begin(),test.end(),sortCondition);
+
+    for(int i =0; i<test.size();++i){
+        std::cout << "[" << test[i].first << "," << test[i].second << "]" << std::endl;
+    }
 
 
 
