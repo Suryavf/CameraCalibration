@@ -401,8 +401,8 @@ int main()
 
   	//string name_video = "calibration_kinectv2.avi";
   	//string name_video = "PadronAnillos_01.avi";
-  	//string name_video = "PadronAnillos_02.avi";
-  	string name_video = "PadronAnillos_03.avi";
+  	string name_video = "PadronAnillos_02.avi";
+  	//string name_video = "PadronAnillos_03.avi";
 	hough_transform_from_video(name_video);
 
 
