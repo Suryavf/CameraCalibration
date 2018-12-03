@@ -52,7 +52,7 @@ Mat truncate_thresholding(Mat image)
 	Mat result;
 
 	// Set threshold and maxValue
-	double thresh = 128;
+	double thresh = 98;
 	double maxValue = 255; 
 
 	// Binary Threshold
@@ -67,7 +67,7 @@ Mat threshold_to_zero(Mat image)
 	Mat result;
 
 	// Set threshold and maxValue
-	double thresh = 200;
+	double thresh = 98;
 	double maxValue = 255; 
 
 	// Binary Threshold
@@ -81,17 +81,17 @@ Mat canny_edge_detector(Mat image)
 	Mat result, detected_edges;
 
 	int edgeThresh = 1;
-	int lowThreshold = 120;
-	int const max_lowThreshold = 100;
-	int ratio = 3;
-	int kernel_size = 3;
+	int lowThreshold = 128;
+	int const max_lowThreshold = 128;
+	int ratio = 5;
+	int kernel_size = 5;
 
 	
 	/// Reduce noise with a kernel 3x3
-  	blur(image, detected_edges, Size(3,3) );
+  	//blur(image, detected_edges, Size(3,3) );
 
   	/// Canny detector
-  	Canny( detected_edges, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size );
+  	Canny( image, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size );
 
   	/// Using Canny's output as a mask, we display our result
   	result = Scalar::all(0);
@@ -225,6 +225,7 @@ Mat hough_transform(Mat image)
 
 }
 
+
 void hough_transform_from_video(string name_video)
 {
 	//Varibles to store and show the detected circle properties
@@ -235,9 +236,10 @@ void hough_transform_from_video(string name_video)
 	int Xvalue;
 	int Yvalue;
 
-	//Variables to store the webcam video , and a converted version of the video
+	//Variables to store  from the video , and a converted version of the video
 	Mat coloredimage;
 	Mat grayimage;
+	Mat binaryimage;
 
 	//auxiliar variable to quit the loop and end the program
 	char key = 0;
@@ -268,9 +270,45 @@ void hough_transform_from_video(string name_video)
 
 		//Resize this frame and convert to gray scale
 		cvtColor(coloredimage, grayimage, CV_BGR2GRAY);
+		//imshow("Gray Image", grayimage);
+
 
 		// Apply blur to Reduce the noise so we avoid false circle detection
 		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
+
+		//Apply binary thresholding to the image
+		//binaryimage = binary_thresholding(grayimage);
+		//imshow("Binary Threshholding", binaryimage);
+
+
+
+		//Apply threshhold to the image
+		//binaryimage = inverse_binary_thresholding(grayimage);
+		//imshow("Inverse Binary Threshholding", binaryimage);
+
+
+		//Apply threshhold to the image
+		//binaryimage = truncate_thresholding(grayimage);
+		//imshow("Truncate Threshholding", binaryimage);
+
+
+		/*Apply threshhold to the image*/
+		binaryimage = threshold_to_zero(grayimage);
+		binaryimage = inverse_binary_thresholding(binaryimage);
+		//imshow("Threshholding to zero", binaryimage);
+
+		//Apply threshhold to the image
+		//binaryimage = binary_thresholding(grayimage);
+		//binaryimage = sobel_edge_detector(binaryimage);
+		//imshow("Sobel Edge Detector", binaryimage);
+
+
+		//Apply adaptative threshold
+		//adaptiveThreshold(grayimage, grayimage, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
+		//grayimage = canny_edge_detector(grayimage);
+		//imshow("Adaptive Threshholding", grayimage);
+
+
 
 		//create a vector to store the center value ( x and y coordinates ) and the radius of each detected circle
 		vector<Vec3f> circles;
@@ -281,8 +319,10 @@ void hough_transform_from_video(string name_video)
 		// 4: inverse ratio of resolution . 5 minimum distance between detected centers. 6: upper threshold for the internal canny edge detector
 		//7: threshold for center detection . 8: Minimum radius to be detected (0=unknown) . 9: maximum radius to be detected
 
-		HoughCircles(grayimage, circles, CV_HOUGH_GRADIENT, 1, 30, 200, 50, 0, 0);
+		//HoughCircles(grayimage, circles, CV_HOUGH_GRADIENT, 1, 30, 200, 50, 0, 0);
+		HoughCircles(binaryimage, circles, CV_HOUGH_GRADIENT, 2, 30, 128, 50, 0, 40);
 
+		
 		// Draw the circles detected
 		for (size_t i = 0; i < circles.size(); i++)
 		{
@@ -322,11 +362,11 @@ void hough_transform_from_video(string name_video)
 
 
 		
-		namedWindow("Hough Circle Transform Demo", CV_WINDOW_AUTOSIZE);
-		imshow("Hough Circle Transform Demo", coloredimage);
+		namedWindow("Hough Circle Transform", CV_WINDOW_AUTOSIZE);
+		imshow("Hough Circle Transform", coloredimage);
 
 
-		key = waitKey(25);
+		key = waitKey(0);
 
 	}
 }
@@ -359,7 +399,10 @@ int main()
   	//namedWindow("Circle Detector", CV_WINDOW_AUTOSIZE);
   	//imshow("Circle Detector", hough_image);
 
-  	string name_video = "calibration_kinectv2.avi";
+  	//string name_video = "calibration_kinectv2.avi";
+  	//string name_video = "PadronAnillos_01.avi";
+  	//string name_video = "PadronAnillos_02.avi";
+  	string name_video = "PadronAnillos_03.avi";
 	hough_transform_from_video(name_video);
 
 
@@ -367,5 +410,6 @@ int main()
     waitKey(0);                                        // Wait for a keystroke in the window
     return 0;
 }
+
 
 
