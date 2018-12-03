@@ -81,10 +81,10 @@ public:
     T        d;
 
     // Constructors
-    Point() : check(false) {x=0;y=0;}
-    Point(  T   &_x,   T   &_y) : check(false) { x=   _x; y=   _y;} 
-    Point( int  &_x,  int  &_y) : check(false) { x=(T)_x; y=(T)_y;} 
-    Point(uchar &_x, uchar &_y) : check(false) { x=(T)_x; y=(T)_y;} 
+    Point() : check(true) {x=0;y=0;}
+    Point(  T   &_x,   T   &_y) : check(true) { x=   _x; y=   _y;} 
+    Point( int  &_x,  int  &_y) : check(true) { x=(T)_x; y=(T)_y;} 
+    Point(uchar &_x, uchar &_y) : check(true) { x=(T)_x; y=(T)_y;} 
 
     void distance(const Point& p, T &d);
     T    distance(const Point& p);
@@ -257,7 +257,7 @@ int main( int argc, char** argv ) {
         d[i] = x_cols*x_cols + y_rows*y_rows;
     }
 
-
+/*
     std::cout << "Points: " << std:: endl;
     for(uint i =0; i< pts.size();++i){
         std::cout << i << ":\t" << "(" << pts[i].x << "," << pts[i].y;
@@ -266,20 +266,27 @@ int main( int argc, char** argv ) {
         std::cout << "\td=" << sqrt(c[i]);
         std::cout << "\td=" << sqrt(d[i]) << std::endl;
     }
-
+*/
 
     auto a_corner = std::min_element( a.begin(), a.end() ) - a.begin();
     auto b_corner = std::min_element( b.begin(), b.end() ) - b.begin();
     auto c_corner = std::min_element( c.begin(), c.end() ) - c.begin();
     auto d_corner = std::min_element( d.begin(), d.end() ) - d.begin();
 
-    pts[a_corner].check = true;
-    pts[b_corner].check = true;
-    pts[c_corner].check = true;
-    pts[d_corner].check = true;
+    pts[a_corner].check = false;
+    pts[b_corner].check = false;
+    pts[c_corner].check = false;
+    pts[d_corner].check = false;
 
-    std::cout << "a:" << a_corner << "\tb:" << b_corner << "\tc:" << c_corner << "\td:" << d_corner << std::endl;
-    std::cout << std::endl << std::endl;
+    //std::cout << "a:" << a_corner << "\tb:" << b_corner << "\tc:" << c_corner << "\td:" << d_corner << std::endl;
+    //std::cout << std::endl << std::endl;
+
+    std::cout << "Point a: (" << pts[a_corner].x << "," << pts[a_corner].y << ")" << std::endl; 
+    std::cout << "Point b: (" << pts[b_corner].x << "," << pts[b_corner].y << ")" << std::endl; 
+    std::cout << "Point c: (" << pts[c_corner].x << "," << pts[c_corner].y << ")" << std::endl; 
+    std::cout << "Point d: (" << pts[d_corner].x << "," << pts[d_corner].y << ")" << std::endl; 
+
+
 
     // Line create
     Line L1 = Line(pts[a_corner],pts[c_corner]);
@@ -287,26 +294,43 @@ int main( int argc, char** argv ) {
     /*
     std::cout << "a=(" << pts[a_corner].x << "," << pts[a_corner].y << ")\t";
     std::cout << "b=(" << pts[b_corner].x << "," << pts[b_corner].y << ")\n";
-    std::cout << "L1=(" << L1.x_coef << "," << L1.y_coef << "," << L1.bias << ")\n";
+    
     */
     
     std::vector< std::pair <T,uint> > dL1p(pts.size());
     std::vector< std::pair <T,uint> > dL2p(pts.size());
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------
-    std::vector<Point> ptsL1 = pts;
+    std::vector<Point> ptsL1(pts);
+    //std::copy ( pts.begin(), pts.end(), ptsL1.begin() );
+
     for(uint i = 0; i<pts.size(); ++i) distance(ptsL1[i], L1, ptsL1[i].d);
     std::sort(ptsL1.begin(),ptsL1.end(),sortDistance);
-    std::sort(ptsL1.begin(),ptsL1.begin()+LEN_X-2,sortX);
+
+
+    std::cout << "Luego de ordenar L1" << std::endl;
+    std::cout << "L1=(" << L1.x_coef << "," << L1.y_coef << "," << L1.bias << ")\n";
+    for(uint i = 0; i<pts.size(); ++i) std::cout << "(" << ptsL1[i].x  << "," << ptsL1[i].y << "," << ptsL1[i].d << "); ";
+    std::cout << std::endl;
+
+
 
     T sumDL1p = 0;
     for(uint i = 0; i<LEN_X-2; ++i) sumDL1p += ptsL1[i].d; 
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------
-    std::vector<Point> ptsL2 = pts;
+    std::vector<Point> ptsL2(pts);
+    //std::copy ( pts.begin(), pts.end(), ptsL2.begin() );
+
     for(uint i = 0; i<ptsL2.size(); ++i) distance(ptsL2[i], L2, ptsL2[i].d);
     std::sort(ptsL2.begin(),ptsL2.end(),sortDistance);
-    std::sort(ptsL2.begin(),ptsL2.begin()+LEN_X-2,sortY);
+    
+    std::cout << std::endl;
+    std::cout << "Luego de ordenar L2" << std::endl;
+    std::cout << "L2=(" << L2.x_coef << "," << L2.y_coef << "," << L2.bias << ")\n";
+    for(uint i = 0; i<pts.size(); ++i) std::cout << "(" << ptsL2[i].x  << "," << ptsL2[i].y << "," << ptsL2[i].d << "); ";
+    std::cout << std::endl;
+    std::cout << std::endl;
 
     T sumDL2p = 0;
     for(uint i = 0; i<LEN_X-2; ++i) sumDL2p += ptsL2[i].d; 
@@ -314,43 +338,6 @@ int main( int argc, char** argv ) {
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-/*
-    T dist;
-    for(uint i = 0; i<pts.size(); ++i){
-        distance(pts[i], L1, dist);
-        dL1p.push_back( std::make_pair(dist,i) );
-
-        distance(pts[i], L2, dist);
-        dL2p.push_back( std::make_pair(dist,i) );
-    }
-
-    std::cout << "Antes del sorting" << std::endl;
-    for(uint i = 0; i<dL1p.size();++i){
-        std::cout << "[" << dL1p[i].first << "," << dL1p[i].second << "]\t" << "[" << dL2p[i].first << "," << dL2p[i].second << "]" << std::endl;
-    }
-
-    std::sort(dL1p.begin(),dL1p.end());
-    std::sort(dL2p.begin(),dL2p.end());
-
-    std::cout << "Luego de sorting" << std::endl;
-    for(uint i = 0; i<dL1p.size();++i){
-        std::cout << "[" << dL1p[i].first << "," << dL1p[i].second << "]\t" << "[" << dL2p[i].first << "," << dL2p[i].second << "]" << std::endl;
-    }
-
-
-
-    T sumDL1p = 0, sumDL2p = 0;
-    for(uint i = 0; i<LEN_X-2; ++i){ 
-        sumDL1p      += dL1p[i].first; 
-        dL1p[i].first = (T)pts[dL1p[i].second].x; 
-    }
-    for(uint i = 0; i<LEN_X-2; ++i){ 
-        sumDL2p      += dL2p[i].first; 
-        dL2p[i].first = (T)pts[dL2p[i].second].y; 
-    }
-*/
 
 /*
  *  Definir orientacion
@@ -384,14 +371,62 @@ int main( int argc, char** argv ) {
     patron[n_rows-1][n_cols-1] = pts[d_corner];
 
     uint id;
-    for(uint i = 1; i<n_cols-1; ++i){
-        ptsL1[i].check = true;
-        patron[0][i] = ptsL1[i];
+    for(uint i = 0; i<n_cols-2; ++i){
+        ptsL1[i].check = false;
+        patron[0][i+1] = ptsL1[i];
     }
-    for(uint j = 1; j<n_rows-1; ++j){ 
-        ptsL2[j].check = true;
-        patron[j][0] = ptsL2[j];
+    for(uint j = 0; j<n_rows-2; ++j){ 
+        ptsL2[j].check = false;
+        patron[j+1][0] = ptsL2[j];
     }
+
+
+
+/*
+ *  Two more
+ *  --------
+ */ 
+
+    Line L3 = Line(pts[b_corner],pts[d_corner]);
+    Line L4 = Line(pts[c_corner],pts[d_corner]);
+
+    for(uint i = 0; i<pts.size(); ++i) distance(pts[i], L3, pts[i].d);
+    std::sort(pts.begin(),pts.end(),sortDistance);
+    std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
+    
+    for(uint i = 0; i<n_cols-2; ++i){
+        pts[i].check = false;
+        patron[n_rows-1][i+1] = pts[i];
+    }
+
+    for(uint i = 0; i<pts.size(); ++i) distance(pts[i], L4, pts[i].d);
+    std::sort(pts.begin(),pts.end(),sortDistance);
+    std::sort(pts.begin(),pts.begin()+n_rows-2,sortY);
+    
+    for(uint i = 0; i<n_rows-2; ++i){
+        pts[i].check = false;
+        patron[i+1][n_cols-1] = pts[i];
+    }
+    
+/*
+ *  Main Loop
+ *  ---------
+ */ 
+
+    Line L;
+    for(uint i = 1; i<n_rows-1; ++i){
+        L = Line(patron[i][0],patron[i][n_cols-1]);
+
+        for(uint j = 0; j<pts.size(); ++j) distance(pts[j], L, pts[j].d);
+        std::sort(pts.begin(),pts.end(),sortDistance);
+        std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
+
+        for(uint j = 0; j<n_cols-2; ++j){
+            pts[j].check = false;
+            patron[i][j+1] = pts[j];
+        }
+    }
+    
 
     std::cout << "\nPatron!:\n========" << std::endl;
     for(uint i = 0; i<n_rows; ++i){
@@ -403,53 +438,6 @@ int main( int argc, char** argv ) {
 
 
 
-
-/*
- *  Two more
- *  --------
- */ 
-/*
-    Line L3 = Line(pts[b_corner],pts[d_corner]);
-    Line L4 = Line(pts[c_corner],pts[d_corner]);
-
-    for(uint i = 0; i<pts.size(); ++i) distance(pts[i], L3, pts[i].d);
-    std::sort(pts.begin(),pts.end(),sortDistance);
-    std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
-    
-    for(uint i = 0; i<n_cols-2; ++i){
-        pts[i].check = true;
-        patron[0][i+1] = pts[i];
-    }
-
-    for(uint i = 0; i<pts.size(); ++i) distance(pts[i], L4, pts[i].d);
-    std::sort(pts.begin(),pts.end(),sortDistance);
-    std::sort(pts.begin(),pts.begin()+n_rows-2,sortY);
-    
-    for(uint i = 0; i<n_rows-2; ++i){
-        pts[i].check = true;
-        patron[i+1][0] = pts[i];
-    }
- */
-
-/*
- *  Main Loop
- *  ---------
- */ 
-/*
-    Line L;
-    for(uint i = 1; i<n_rows-1; ++i){
-        L = Line(patron[i][0],patron[i][n_cols-1]);
-
-        for(uint j = 0; j<pts.size(); ++j) distance(pts[j], L, pts[j].d);
-        std::sort(pts.begin(),pts.end(),sortDistance);
-        std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
-
-        for(uint j = 0; j<n_cols-2; ++j){
-            pts[j].check = true;
-            patron[i][j+1] = pts[j];
-        }
-    }
- */
 // -----------------------------------------------------------------------------------------------------
 
     /*
