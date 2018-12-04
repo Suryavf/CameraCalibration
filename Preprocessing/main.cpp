@@ -422,8 +422,11 @@ void find_rings(string name_video)
 		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
 
 		/// Detect edges using Threshold
-  		threshold( grayimage, threshold_output, 100, 255, THRESH_BINARY );
+  		//threshold( grayimage, threshold_output, 100, 255, THRESH_BINARY );
+  		//adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
+  		adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY,11,3);
   		imshow("Binarized Image", threshold_output);
+
   		
   		/// Find contours
   		findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
