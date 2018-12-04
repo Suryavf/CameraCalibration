@@ -3,7 +3,7 @@
 int main(){
 
 	// Read image
-	string name_video = "Preprocessing/PadronAnillos_02.avi";
+	string name_video = "Preprocessing/PadronAnillos_01.avi";
     //hough_transform_from_video(name_video);   // Hough method
 	find_rings(name_video);                     // Ellipse Method
 
