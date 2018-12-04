@@ -3,13 +3,12 @@
 #include <math.h>
 #include <limits>
 
+#ifndef STRUCTURES_H
+#define STRUCTURES_H
+
 typedef float T;
 typedef unsigned char uchar;
 typedef unsigned  int uint ;
-
-uint LEN_X = 5;
-uint LEN_Y = 4;
-
 
 /*
  * Class Vect
@@ -98,16 +97,11 @@ public:
     T    eval(const Point &p);
 };
 
-void Line::eval(const Point &p, T &v){
-    v = p.x*x_coef + p.y*y_coef +  bias;
-}
-T    Line::eval(const Point &p){
-    return p.x*x_coef + p.y*y_coef +  bias;
-}
-
 
 /*
  * Distance
  * =================================================
  */
 void distance(Point &p, Line &l, T &d);
+
+#endif

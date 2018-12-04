@@ -1,5 +1,8 @@
 #include "structures.h"
 
+#ifndef MAPPING_H
+#define MAPPING_H
+
 void getCorners(const std::vector<Point>  &pts,
                             uint &IL, uint &IR,
                             uint &SL, uint &SR,
@@ -11,10 +14,19 @@ void initPatron(const std::vector<Point>  &pts,
                 Line &L1, Line &L2,
                 const uint &IL, const uint &IR,
                 const uint &SL, const uint &SR,
+                const uint &len_x, const uint &len_y,
                 uint &n_rows, uint &n_cols);
 
 void addPatron(std::vector<Point>  &pts,
                std::vector< std::vector<Point> > &patron,
                Line &L,
                const uint &n_rows, const uint &n_cols,
+               const uint &position,
                const bool &horz = true);
+
+void mapping(std::vector<Point>  &pts,
+             std::vector< std::vector<Point> > &patron,
+             const uint &n_rowsImg, const uint &n_colsImg,
+             const uint &len_x, const uint &len_y);
+
+#endif

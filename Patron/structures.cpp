@@ -44,6 +44,19 @@ T    Point::distance(const Point& p){
 
 
 /*
+ * Class Line
+ * =================================================
+ */
+
+void Line::eval(const Point &p, T &v){
+    v = p.x*x_coef + p.y*y_coef +  bias;
+}
+T    Line::eval(const Point &p){
+    return p.x*x_coef + p.y*y_coef +  bias;
+}
+
+
+/*
  *  Distance Line to Point
  *  ----------------------
  *           |L(p)|
