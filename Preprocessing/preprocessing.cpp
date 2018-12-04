@@ -105,6 +105,8 @@ void hough_transform_from_video(string name_video)
 	capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
 	capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 
+	//for(int i=0; i<44*30; ++i)
+	//		capture >> coloredimage;
 
 	//Loop will stop if "q" is pressed in the keyboard
 	while (key != 'q')
@@ -122,8 +124,12 @@ void hough_transform_from_video(string name_video)
 		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
 
 		/*Apply threshhold to the image*/
-		binaryimage = threshold_to_zero(grayimage);
-		binaryimage = inverse_binary_thresholding(binaryimage);
+		//threshold( grayimage, binaryimage, 100, 255, THRESH_BINARY );
+  		adaptiveThreshold(grayimage, binaryimage, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY,11,3);
+  		imshow("Binarized Image", binaryimage);
+
+		//binaryimage = threshold_to_zero(grayimage);
+		//binaryimage = inverse_binary_thresholding(binaryimage);
 		
 		//create a vector to store the center value ( x and y coordinates ) and the radius of each detected circle
 		vector<Vec3f> circles;
@@ -136,7 +142,7 @@ void hough_transform_from_video(string name_video)
 
 		//HoughCircles(grayimage, circles, CV_HOUGH_GRADIENT, 1, 30, 200, 50, 0, 0);
 		HoughCircles(binaryimage, circles, CV_HOUGH_GRADIENT, 2, 30, 128, 50, 0, 40);
-
+		Mat drawing = Mat::zeros( binaryimage.size(), CV_8UC3 );
 		
 		// Draw the circles detected
 		for (size_t i = 0; i < circles.size(); i++)
@@ -155,20 +161,20 @@ void hough_transform_from_video(string name_video)
 			//DRAWING THE CENTER OF THE CIRCLE
 			//Use the circle function to draw the center of the detected circle
 			//Use the center coordinate and a radius of 3 to just draw a point on the center.
-			circle(coloredimage, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+			circle(drawing, center, 3, Scalar(113, 6, 255), -1, 8, 0);
 
 			//DRAWING THE CIRCLE CONTOUR.
 			//Use the circle function to draw the detected circle on the image
 			//Use the center coordinate and the radius coordinate detected by the HoughCircles function
-			circle(coloredimage, center, radius, Scalar(0, 0, 255), 3, 8, 0);
+			circle(drawing, center, radius, Scalar(113, 6, 255), 3, 8, 0);
 
 			//Convert the integer Center point and radius values to string
-			radiusStr = intToString(Rvalue);
-			xcenterStr = intToString(Xvalue);
-			ycenterStr = intToString(Yvalue);
+			//radiusStr = intToString(Rvalue);
+			//xcenterStr = intToString(Xvalue);
+			//ycenterStr = intToString(Yvalue);
 
 			//Display on the colored image the center and radius values.
-			putText(coloredimage, "(" + xcenterStr + "," + ycenterStr + ")", Point(Xvalue, Yvalue-20), 1, 1, Scalar(0, 255, 0), 2);
+			//putText(coloredimage, "(" + xcenterStr + "," + ycenterStr + ")", Point(Xvalue, Yvalue-20), 1, 1, Scalar(0, 255, 0), 2);
 
 			//Display the values also on the cmd window
 			cout << "center : " << center << "\nradius : " << radius << endl;
@@ -176,9 +182,9 @@ void hough_transform_from_video(string name_video)
 		}
 
 		namedWindow("Hough Circle Transform", CV_WINDOW_AUTOSIZE);
-		imshow("Hough Circle Transform", coloredimage);
+		imshow("Hough Circle Transform", drawing);
 
-		key = waitKey(0);
+		key = waitKey(30);
 
 	}
 }
@@ -220,6 +226,8 @@ void find_rings(string name_video)
 	capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
 	capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 
+	//for(int i=0; i<44*30; ++i)
+	//	capture >> coloredimage;
 
 	//Loop will stop if "q" is pressed in the keyboard
 	while (key != 'q')
@@ -227,12 +235,14 @@ void find_rings(string name_video)
 
 		//Capture a frame of the webcam live video and store it on the image variable
 		capture >> coloredimage;
+		
 
 		//Resize this frame and convert to gray scale
 		cvtColor(coloredimage, grayimage, CV_BGR2GRAY);
 		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
 
 		/// Detect edges using Threshold
+		//threshold( grayimage, threshold_output, 100, 255, THRESH_BINARY );
   		adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY,11,3);
   		imshow("Binarized Image", threshold_output);
 
@@ -258,7 +268,7 @@ void find_rings(string name_video)
   		
   		for( unsigned int i = 0; i< contours.size()-1; i++ )
      	{
-       		color = Scalar( 0, 0, 255 );
+       		color = Scalar( 113, 6, 255 );
        		
        		// contour
        		//drawContours( drawing, contours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
@@ -269,7 +279,7 @@ void find_rings(string name_video)
 
        		x_t1 = minEllipse[i+1].center.x;
        		y_t1 = minEllipse[i+1].center.y;
-
+            
        		distance = sqrt(pow(x_t0 - x_t1, 2) + pow(y_t0 - y_t1, 2));
 
        		if(distance <= holgura)
@@ -283,10 +293,10 @@ void find_rings(string name_video)
      	cout<<"Number of ellipses: "<<counter<<endl;
      	counter = 0;
 
-     	namedWindow("HELLO", CV_WINDOW_AUTOSIZE);
-		imshow("HELLO", drawing);
+     	namedWindow("Ellipses method", CV_WINDOW_AUTOSIZE);
+		imshow("Ellipses method", drawing);
 
-		key = waitKey(0);
+		key = waitKey(30);
 
 	}
 
