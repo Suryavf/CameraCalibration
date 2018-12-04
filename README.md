@@ -6,7 +6,7 @@ Computer vision techniques are widely studied in order to develop real time appl
 
 Use [OpenCV](https://opencv.org/) 3.4
 
-## Compilation
+## Compilation and execution
 
 ```bash
 make
