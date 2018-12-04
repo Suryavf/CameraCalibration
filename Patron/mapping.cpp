@@ -164,7 +164,7 @@ void mapping(std::vector<Point>  &pts,
              std::vector< std::vector<Point> > &patron,
              const uint &n_rowsImg, const uint &n_colsImg,
              const uint &len_x, const uint &len_y){
-    /*
+/*
  *  Corners
  *  -------
  */ 
@@ -189,7 +189,6 @@ void mapping(std::vector<Point>  &pts,
  *  Two more
  *  --------
  */ 
-
     Line L3 = Line(pts[SL],pts[SR]);
     Line L4 = Line(pts[IR],pts[SR]);
 
@@ -201,14 +200,13 @@ void mapping(std::vector<Point>  &pts,
  *  Main Loop
  *  ---------
  */ 
-
     Line L;
     for(uint i = 1; i<n_rows-1; ++i){
         L = Line(patron[i][0],patron[i][n_cols-1]);
         addPatron(pts,patron,L,n_rows, n_cols,i);
     }
     
-
+    
     std::cout << "\nPatron!:\n========" << std::endl;
     for(uint i = 0; i<n_rows; ++i){
         for(uint j = 0; j<n_cols; ++j){ 
