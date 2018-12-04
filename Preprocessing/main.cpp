@@ -395,8 +395,10 @@ void find_rings(string name_video)
 
 	//auxiliar variable to quit the loop and end the program
 	char key = 0;
-
+	
+	//Capturing the video scene: 0 webcam, 1 other camera
 	VideoCapture capture(name_video);
+	//VideoCapture capture(1);
 
 	//Check for Failure
 	if (!capture.isOpened())
