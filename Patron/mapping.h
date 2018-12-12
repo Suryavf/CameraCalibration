@@ -1,13 +1,35 @@
-#include "structures.h"
-
 #ifndef MAPPING_H
 #define MAPPING_H
 
-void getCorners(const std::vector<Point>  &pts,
-                            uint &IL, uint &IR,
-                            uint &SL, uint &SR,
-                            const uint &n_colsSRC,
-                            const uint &n_rowsSRC);
+#include "structures.h"
+typedef std::vector<Point> vPoint;
+
+T umb = 10.0;
+
+
+/*
+ *  Runtimes
+ *  --------
+ */
+
+
+/*
+ *  Select centers
+ *  ----------------
+ */
+void addingCenters(vPoint &pts,
+                   vPoint &raw);
+
+
+/*
+ *  Matching pattern
+ *  ----------------
+ */
+void getCorners(const vPoint &pts,
+                      uint &IL, uint &IR,
+                      uint &SL, uint &SR,
+                      const uint &n_colsSRC,
+                      const uint &n_rowsSRC);
 
 void initPatron(const std::vector<Point>  &pts,
                 std::vector< std::vector<Point> > &patron,

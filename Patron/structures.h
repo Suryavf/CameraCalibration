@@ -56,14 +56,17 @@ public:
 class Point : public Vect{
 public:
     // Parameters
-    bool check;
-    T        d;
+    bool check;     // Patron matching
+    T        d;     // Distance (temporal variable)
+
+    bool isupdate;  // El punto fue actualizado?
+    bool islost  ;  // El punto perdido en frame
 
     // Constructors
     Point() : check(true) {x=0;y=0;}
-    Point(  T   &_x,   T   &_y) : check(true) { x=   _x; y=   _y;} 
-    Point( int  &_x,  int  &_y) : check(true) { x=(T)_x; y=(T)_y;} 
-    Point(uchar &_x, uchar &_y) : check(true) { x=(T)_x; y=(T)_y;} 
+    Point(  T   &_x,   T   &_y) : check(true), isupdate(false), islost(false) { x=   _x; y=   _y;} 
+    Point( int  &_x,  int  &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
+    Point(uchar &_x, uchar &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
 
     void distance(const Point& p, T &d);
     T    distance(const Point& p);
