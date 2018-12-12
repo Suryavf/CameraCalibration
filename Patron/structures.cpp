@@ -31,12 +31,12 @@ T    Vect::dot(const Vect& p){
  * Class Point
  * =================================================
  */
-void Point::distance(const Point& p, T &d){
+void Pt::distance(const Pt& p, T &d){
     T a = this->x - p.x;
     T b = this->y - p.y;
     d = std::sqrt( a*a + b*b );
 }
-T    Point::distance(const Point& p){
+T    Pt::distance(const Pt& p){
     T a = this->x - p.x;
     T b = this->y - p.y;
     return std::sqrt( a*a + b*b );
@@ -48,10 +48,10 @@ T    Point::distance(const Point& p){
  * =================================================
  */
 
-void Line::eval(const Point &p, T &v){
+void Line::eval(const Pt &p, T &v){
     v = p.x*x_coef + p.y*y_coef +  bias;
 }
-T    Line::eval(const Point &p){
+T    Line::eval(const Pt &p){
     return p.x*x_coef + p.y*y_coef +  bias;
 }
 
@@ -63,7 +63,7 @@ T    Line::eval(const Point &p){
  *  d(L,p) = ------
  *            ||w||
  */
-void distance(Point &p, Line &l, T &d){
+void distance(Pt &p, Line &l, T &d){
     if (p.check) d = abs( l.eval(p) ); // w = 1
     else         d = std::numeric_limits<T>::max();
 }

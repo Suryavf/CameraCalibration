@@ -50,10 +50,10 @@ public:
 
 
 /*
- * Class Point
+ * Class Pt
  * =================================================
  */
-class Point : public Vect{
+class Pt : public Vect{
 public:
     // Parameters
     bool check;     // Patron matching
@@ -63,16 +63,17 @@ public:
     bool islost  ;  // El punto perdido en frame
 
     // Constructors
-    Point() : check(true) {x=0;y=0;}
-    Point(  T   &_x,   T   &_y) : check(true), isupdate(false), islost(false) { x=   _x; y=   _y;} 
-    Point( int  &_x,  int  &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
-    Point(uchar &_x, uchar &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
+    Pt() : check(true) {x=0;y=0;}
+    Pt(  T   &_x,   T   &_y) : check(true), isupdate(false), islost(false) { x=   _x; y=   _y;} 
+    Pt( int  &_x,  int  &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
+    Pt(uchar &_x, uchar &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
 
-    void distance(const Point& p, T &d);
-    T    distance(const Point& p);
+    void distance(const Pt& p, T &d);
+    T    distance(const Pt& p);
 };
 
-
+typedef std::vector< Pt  > Pts;
+typedef std::vector< Pts > Grid;
 
 /*
  * Class Line
@@ -86,7 +87,7 @@ private:
 
 public:
     Line() : x_coef(0),y_coef(0),bias(0){}
-    Line(const Point &a, const Point &b) : x_coef(b.y - a.y),
+    Line(const Pt &a, const Pt &b) : x_coef(b.y - a.y),
                                            y_coef(a.x - b.x),
                                              bias(a.y*(b.x-a.x) + a.x*(a.y-b.y)){
         T module = sqrt(x_coef*x_coef + y_coef*y_coef);
@@ -96,8 +97,8 @@ public:
         bias   =   bias/module;
     }
 
-    void eval(const Point &p, T &v);
-    T    eval(const Point &p);
+    void eval(const Pt &p, T &v);
+    T    eval(const Pt &p);
 };
 
 
@@ -105,6 +106,6 @@ public:
  * Distance
  * =================================================
  */
-void distance(Point &p, Line &l, T &d);
+void distance(Pt &p, Line &l, T &d);
 
 #endif
