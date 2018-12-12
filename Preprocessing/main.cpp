@@ -395,10 +395,8 @@ void find_rings(string name_video)
 
 	//auxiliar variable to quit the loop and end the program
 	char key = 0;
-	
-	//Capturing the video scene: 0 webcam, 1 other camera
+
 	VideoCapture capture(name_video);
-	//VideoCapture capture(1);
 
 	//Check for Failure
 	if (!capture.isOpened())
@@ -412,6 +410,10 @@ void find_rings(string name_video)
 	capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 
 
+	int min_x = 1000000, min_y = 1000000;
+    int max_x = 0, max_y = 0;
+    bool flag = false;
+    
 	//Loop will stop if "q" is pressed in the keyboard
 	while (key != 'q')
 	{
@@ -419,15 +421,46 @@ void find_rings(string name_video)
 		//Capture a frame of the webcam live video and store it on the image variable
 		capture >> coloredimage;
 
+		/*if(flag)
+		{
+			Rect Rec(min_x-100, min_y-100, max_x-min_x+100, max_y-min_y+100);
+    		coloredimage = drawing(Rec);
+		}*/
+		
+
+
+		int width = coloredimage.cols;
+		int height = coloredimage.rows;
+
 		//Resize this frame and convert to gray scale
 		cvtColor(coloredimage, grayimage, CV_BGR2GRAY);
 		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
 
 		/// Detect edges using Threshold
   		//threshold( grayimage, threshold_output, 100, 255, THRESH_BINARY );
-  		//adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
-  		adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY,11,3);
+  		adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
   		imshow("Binarized Image", threshold_output);
+
+  		
+  		int erosion_type = MORPH_ELLIPSE;
+  		int erosion_size = 2;
+	    Mat element2 = getStructuringElement( erosion_type,
+	                       Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+	                       Point( erosion_size, erosion_size ) );
+	    erode( threshold_output, threshold_output, element2 );
+	    imshow( "Erosion", threshold_output );  
+
+
+  		int dilation_type = MORPH_ELLIPSE;
+  		int dilation_size = 2;
+  		Mat element = getStructuringElement( dilation_type,
+                       Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                       Point( dilation_size, dilation_size ) );
+  		dilate( threshold_output, threshold_output, element );
+  		imshow( "Dilation", threshold_output );
+
+
+		
 
   		
   		/// Find contours
@@ -435,6 +468,7 @@ void find_rings(string name_video)
 
 		/// Find the  ellipses for each contour
 		vector<RotatedRect> minEllipse( contours.size() );
+
 
   		for( int i = 0; i < contours.size(); i++ )
      	{ 
@@ -447,34 +481,100 @@ void find_rings(string name_video)
 
   		/// Draw contours + rotated rects + ellipses
   		drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
-  		cout <<"number of elipses: "<<contours.size()<<endl;
+  		//cout <<"number of elipses: "<<contours.size()<<endl;
   		
+  		vector<int> ellipses_to_verify( contours.size() );
+  		vector<Point2f> good_ellipses;
+
   		for( int i = 0; i< contours.size()-1; i++ )
      	{
-       		color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-       		
-       		// contour
-       		//drawContours( drawing, contours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-       		
-       		// ellipse
-       		x_t0 = minEllipse[i].center.x;
-       		y_t0 = minEllipse[i].center.y;
+     		if(minEllipse[i].size.width > width/8 || minEllipse[i].size.height > height/6 || 
+     		   minEllipse[i].size.width < 6 || minEllipse[i].size.height < 6 || ellipses_to_verify[i] ==
+     		   -1)
+     		{
 
-       		x_t1 = minEllipse[i+1].center.x;
-       		y_t1 = minEllipse[i+1].center.y;
+     		}
 
-       		distance = sqrt(pow(x_t0 - x_t1, 2) + pow(y_t0 - y_t1, 2));
+     		else
+     		{
 
-       		if(distance <= holgura)
-	       	{
-	       		ellipse( drawing, minEllipse[i], color, 2, 8 );
-	       		ellipse( drawing, minEllipse[i+1], color, 2, 8 );
-	       		counter++;
-	       	}
+	       		color = Scalar(0,0,255);//Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+	       		
+	       		// contour
+	       		//drawContours( drawing, contours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+	       		
+	       		// ellipse
+	       		x_t0 = minEllipse[i].center.x;
+	       		y_t0 = minEllipse[i].center.y;
+	       		
+	       		int counter_verify = 1;
+	       		float sumx = x_t0;
+	       		float sumy = y_t0;
+
+	       		for( int j = i+1; j< contours.size()-1; j++ )
+	       		{
+	       			x_t1 = minEllipse[j].center.x;
+		       		y_t1 = minEllipse[j].center.y;
+
+		       		distance = sqrt(pow(x_t0 - x_t1, 2) + pow(y_t0 - y_t1, 2));
+
+		       		//ellipse( drawing, minEllipse[i], Scalar(0,255,255), 4, 8 );
+		       		if(distance <= holgura)
+			       	{
+			       		ellipse( drawing, minEllipse[i], color, 2, 8 );
+			       		ellipse( drawing, minEllipse[i+1], color, 2, 8 );
+			       		counter++;
+			       		counter_verify++;
+			       		sumx += x_t1;
+			       		sumy += y_t1;
+			       		ellipses_to_verify[j] = -1;
+			       	}
+			    }
+
+			    if(counter_verify > 1)
+			    {
+			    	good_ellipses.push_back(Point2f(sumx/counter_verify, sumy/counter_verify));
+			    }
+
+		    }
      	}
 
-     	cout<<"Number of ellipses: "<<counter<<endl;
+     	// DE ACUERDO AL PATRÓN
+     	if(good_ellipses.size() == 12)
+     	{
+     		flag = true;
+     		for(int i=0; i<good_ellipses.size(); i++)
+     		{
+     			if(good_ellipses[i].x < min_x)
+     				min_x = good_ellipses[i].x;
+
+     			if(good_ellipses[i].y < min_y)
+     				min_y = good_ellipses[i].y;
+
+     			if(good_ellipses[i].x > max_x)
+     				max_x = good_ellipses[i].x;
+
+     			if(good_ellipses[i].y > max_y)
+     				max_y = good_ellipses[i].y;
+     		}
+     	}
+
+     	/*else
+     		flag = false;
+*/
+     	for (int i = 0; i < good_ellipses.size(); ++i)
+     	{
+     		//ellipse( drawing, minEllipse[i], color, 2, 8 );
+     		circle(drawing, good_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
+     	}
+
+     	//cout<<"Number of ellipses: "<<counter<<endl;
      	counter = 0;
+
+
+     	cout<<"Number of good ellipses: "<<good_ellipses.size()<<endl;
+     	if(good_ellipses.size() != 12)
+     		cout<<"AUXILIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"<<endl;
 
      	namedWindow("HELLO", CV_WINDOW_AUTOSIZE);
 		imshow("HELLO", drawing);
@@ -485,46 +585,14 @@ void find_rings(string name_video)
 
 }
 
-
 int main()
 {
 
-	// Read image
-	Mat colored_image = imread("patron.png", CV_LOAD_IMAGE_COLOR);
-	Mat image = imread("patron.png", IMREAD_GRAYSCALE);
 	
-	//Mat binary_image = binary_thresholding(image);
-	//Mat binary_image = inverse_binary_thresholding(image);
-	//Mat binary_image = truncate_thresholding(image);
-	//Mat binary_image = threshold_to_zero(image);
-	//imshow( "Display window", binary_image);
-
-
-	//Mat canny_image = canny_edge_detector(image);
-	//canny_image = inverse_binary_thresholding(canny_image);
-	//imshow( "Display window", canny_image);
-
-
-	//Mat sobel_image = sobel_edge_detector(image);
-	//imshow( "Display window", sobel_image);
-
-  	//Mat hough_image = hough_transform(colored_image);
-  	//namedWindow("Circle Detector", CV_WINDOW_AUTOSIZE);
-  	//imshow("Circle Detector", hough_image);
-
-  	//string name_video = "calibration_kinectv2.avi";
-  	//string name_video = "PadronAnillos_01.avi";
-  	//string name_video = "PadronAnillos_02.avi";
-  	//string name_video = "PadronAnillos_03.avi";
-	//hough_transform_from_video(name_video);
-
-
-	string name_video = "PadronAnillos_03.avi";
+	
+  	string name_video = "padron2.avi";
 	find_rings(name_video);
-
 
     waitKey(0);                                        // Wait for a keystroke in the window
     return 0;
 }
-
-
