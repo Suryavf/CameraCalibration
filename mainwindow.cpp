@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include "Preprocessing/preprocessing.h"
 
+#include <fstream>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow){
@@ -26,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // Create Result scene
     ui->result->setScene(new QGraphicsScene(this));
     ui->result->scene()->addItem(&PixResult);
+
 }
 
 MainWindow::~MainWindow(){
@@ -44,21 +47,46 @@ void MainWindow::closeEvent(QCloseEvent *event){
 }
 
 void MainWindow::on_pushButton_clicked(){
-
+    float timeLapse;
+    int ellipseCount;
+    double start_time;
     video = cv::VideoCapture("/home/victor/Documentos/Imagenes/CameraCalibration/data/padron2.avi");
+
+    std::ofstream outfile;
+    outfile.open("time.txt", std::ios_base::app);
 
     if (!video.isOpened()){
         printf("Failed to open the video");
     }
 
     cv::Mat frame,binarized,morphology,ellipses,result;
+    cv::RotatedRect minRect;
 
+    video >> frame;
+    minRect = cv::RotatedRect(cv::Point(frame.rows,         0),
+                              cv::Point(         0,         0),
+                              cv::Point(         0,frame.cols));
+
+    int countTrue = 0, countFrames = 0;
     while(video.isOpened()){
         video >> frame;
 
         if(!frame.empty()){
+            //
             // Grid detection
-            gridDetection(frame,binarized,morphology,ellipses,result);
+            // ..............
+            start_time = omp_get_wtime();
+            gridDetection(frame,binarized,morphology,ellipses,result,minRect,ellipseCount);
+            timeLapse = float( (omp_get_wtime() - start_time)*1000 );
+
+            outfile << std::to_string(timeLapse) + "\n";
+
+            ++countFrames;
+            if(ellipseCount == 20) ++countTrue;
+
+            //
+            // Drawing
+            // .......
 
             // Frame (Original)
             QImage qframe(frame.data,frame.cols,frame.rows,int(frame.step),QImage::Format_RGB888);
@@ -84,8 +112,37 @@ void MainWindow::on_pushButton_clicked(){
             PixEllipses.setPixmap( QPixmap::fromImage(qellipses.rgbSwapped()) );
             ui->ellipses->fitInView(&PixEllipses, Qt::KeepAspectRatio);
 
+            // Result
+            QImage qresult(result.data,result.cols,result.rows,int(result.step),QImage::Format_RGB888);
+
+            PixResult.setPixmap( QPixmap::fromImage(qresult.rgbSwapped()) );
+            ui->result->fitInView(&PixResult, Qt::KeepAspectRatio);
+
+            //
+            // Print text
+            // ..........
+            ui->timeFrame->setText(QString::number( int(timeLapse)) + " ms");
+            ui->ellipseCount->setText(QString::number(ellipseCount));
+
+            if(ellipseCount == 20){
+                ui->status->setText("Correct detection!");
+                ui->status->setStyleSheet("QLabel { color : black; }");
+            }else if( ellipseCount < 20 ){
+                ui->status->setText("Loss ellipses");
+                 ui->status->setStyleSheet("QLabel { color : red; }");
+            }else{
+                ui->status->setText("Noise ellipse");
+                 ui->status->setStyleSheet("QLabel { color : red; }");
+            }
+
+            ui->accuracy->setText(QString::number( int(float(countTrue)*100/float(countFrames))  ) + " %");
         }
         qApp->processEvents();
+
+        if (frame.empty())
+              break;
+
     }
+    outfile.close();
 
 }

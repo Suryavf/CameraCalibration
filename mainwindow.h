@@ -9,8 +9,11 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <QLabel>
+#include <QElapsedTimer>
 
 #include "opencv2/opencv.hpp"
+#include <omp.h>
 
 namespace Ui {
 class MainWindow;
@@ -32,7 +35,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    //QGraphicsPixmapItem pixmap;
 
     // Graphics Pixmap
     QGraphicsPixmapItem PixOriginal  ;
@@ -43,6 +45,7 @@ private:
 
     // CV::Video
     cv::VideoCapture video;
+
 };
 
 #endif // MAINWINDOW_H

@@ -65,6 +65,7 @@ public:
     // Constructors
     Pt() : check(true) {x=0;y=0;}
     Pt(  T   &_x,   T   &_y) : check(true), isupdate(false), islost(false) { x=   _x; y=   _y;} 
+    Pt( cv::Point2f p ) : check(true), isupdate(false), islost(false) { x=   p.x; y=   p.y;}
     Pt( int  &_x,  int  &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
     Pt(uchar &_x, uchar &_y) : check(true), isupdate(false), islost(false) { x=(T)_x; y=(T)_y;} 
 

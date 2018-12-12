@@ -29,21 +29,25 @@ SOURCES += \
         mainwindow.cpp \
         Preprocessing/preprocessing.cpp \
         Preprocessing/utils.cpp \
-    Patron/structures.cpp \
-    Patron/mapping.cpp
+        Patron/structures.cpp \
+        Patron/mapping.cpp
 
 HEADERS += \
         mainwindow.h \
         Preprocessing/preprocessing.h \
         Preprocessing/utils.h \
-    Patron/mapping.h \
-    Patron/structures.h
+        Patron/mapping.h \
+        Patron/structures.h
 
 # OpenCV
 INCLUDEPATH += /usr/local/include/opencv2
 LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_videoio
 CONFIG += link_pkgconfig
 PKGCONFIG += opencv
+
+# OpenMP
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
 
 FORMS += \
         mainwindow.ui

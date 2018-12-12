@@ -1,204 +1,207 @@
 #include "preprocessing.h"
 
-void find_rings(string name_video){
-/*
-    Define parameters 
-	-----------------
- */
-	//Variables to store  from the video , and a converted version of the video
-	Mat coloredimage;
-	Mat grayimage;
-	Mat threshold_output; // binarized image
-  	vector<vector<Point> > contours; //contours (elipses)
-  	vector<Vec4i> hierarchy; // 
-  	Mat drawing;
-  	Scalar color;
 
-	// Erosion & dilation
-	Mat element = getStructuringElement( MORPH_ELLIPSE, Size ( 5, 5 ),Point( 2, 2 ));
+void distance(const cv::Point2f &p1, const cv::Point2f &p2, float &dist){
+    float x = p1.x - p2.x;
+    float y = p1.y - p2.y;
+    dist =  sqrt( x*x + y*y );
+}
 
-  	float x_t0, y_t0;
-  	float x_t1, y_t1;
-  	float holgura = 1;
-  	float distance;
-  	int counter = 0;
 
-	
-	
-	int min_x = 1000000, min_y = 1000000;
-    int max_x = 0, max_y = 0;
-    bool flag = false;
-    
 
 /*
-    Video configure
-	---------------
+ *  Get corners
+ *  -----------
  */
-	VideoCapture capture(name_video);
+void getCorners(const std::vector<cv::Point2f> &points,
+                    uint &IL, uint &IR,
+                    uint &SL, uint &SR,
+                    const uint &cols,
+                    const uint &rows){
+    float x_cols,y_rows,aux;
+    float x,y;
+    float MAX_T = std::numeric_limits<T>::max();
+    float IL_min = MAX_T, SL_min = MAX_T,
+          IR_min = MAX_T, SR_min = MAX_T;
+    for( uint i = 0; i < points.size(); i++ ){
+        x = points[i].x; x_cols = cols - x;
+        y = points[i].y; y_rows = rows - y;
 
-	//Set Capture device properties.
-	capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-	capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+        // Inferior Left
+        aux = x*x + y*y;
+        if (IL_min>aux){ IL_min = aux;
+                         IL     =   i;}
 
-	//Check for Failure
-	if (!capture.isOpened()){
-		printf("Failed to open the video");
-	}
+        // Superior Left
+        aux = x*x + y_rows*y_rows;
+        if (SL_min>aux){ SL_min = aux;
+                         SL     =   i;}
 
-	//auxiliar variable to quit the loop and end the program
-	char key = 0;
+        // Inferior Right
+        aux = x_cols*x_cols + y*y;
+        if (IR_min>aux){ IR_min = aux;
+                         IR     =   i;}
 
-	//Loop will stop if "q" is pressed in the keyboard
-	while (key != 'q'){
-
-		//Capture a frame of the webcam live video and store it on the image variable
-		capture >> coloredimage;
-
-		int width = coloredimage.cols;
-		int height = coloredimage.rows;
-
-		//Resize this frame and convert to gray scale
-		cvtColor(coloredimage, grayimage, CV_BGR2GRAY);
-		GaussianBlur(grayimage, grayimage, Size(9, 9), 2, 2);
-
-		/// Detect edges using Threshold
-  		adaptiveThreshold(grayimage, threshold_output, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
-  		imshow("Binarized Image", threshold_output);
-
-  		// Erode/dilate
-	    erode ( threshold_output, threshold_output, element );
-	    dilate( threshold_output, threshold_output, element );
-  		imshow( "Erosion/Dilation", threshold_output );
-
-  		
-  		/// Find contours
-  		findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-
-		/// Find the  ellipses for each contour
-		vector<RotatedRect> minEllipse( contours.size() );
+        // Superior Right
+        aux = x_cols*x_cols + y_rows*y_rows;
+        if (SR_min>aux){ SR_min = aux;
+                         SR     =   i;}
+    }
+}
 
 
-  		for( int i = 0; i < contours.size(); i++ )
-     	{ 
-     		
-       		if( contours[i].size() > 5 )
-         	{ 
-         		minEllipse[i] = fitEllipse( Mat(contours[i]) ); 
-         	}
-     	}
 
-  		/// Draw contours + rotated rects + ellipses
-  		drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
-  		//cout <<"number of elipses: "<<contours.size()<<endl;
-  		
-  		vector<int> ellipses_to_verify( contours.size() );
-  		vector<Point2f> good_ellipses;
 
-  		for( int i = 0; i< contours.size()-1; i++ )
-     	{
-     		if(minEllipse[i].size.width > width/8 || minEllipse[i].size.height > height/6 || 
-     		   minEllipse[i].size.width < 6 || minEllipse[i].size.height < 6 || ellipses_to_verify[i] ==
-     		   -1)
-     		{
+void sortingPoints(vector<Point2f> &points, const uint &cols, const uint &rows){
 
-     		}
+    if(points.size()<2){
+        // No hace nada
+    }
+    else if(points.size()<4){
+        std::sort(points.begin(),points.end(),[] (const Point2f& p1, const Point2f& p2){
+                                                    float dist1, dist2;
+                                                    distance(Point2f(0,0),p1,dist1);
+                                                    distance(Point2f(0,0),p2,dist2);
+                                                    return (dist1 < dist2);
+                                                  });
+    }
+    else{
+        uint IL, IR, SL, SR;
+        getCorners(points,IL,IR,SL,SR,cols,rows);
 
-     		else
-     		{
+        // Transform
+        cv::Point2f * inputQuad = new cv::Point2f[4];
+        cv::Point2f *outputQuad = new cv::Point2f[4];
 
-	       		color = Scalar(0,0,255);//Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-	       		
-	       		// contour
-	       		//drawContours( drawing, contours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-	       		
-	       		// ellipse
-	       		x_t0 = minEllipse[i].center.x;
-	       		y_t0 = minEllipse[i].center.y;
-	       		
-	       		int counter_verify = 1;
-	       		float sumx = x_t0;
-	       		float sumy = y_t0;
+        inputQuad[0] = points[IL]; inputQuad[1] = points[IR];
+        inputQuad[3] = points[SL]; inputQuad[2] = points[SR];
 
-	       		for( int j = i+1; j< contours.size()-1; j++ )
-	       		{
-	       			x_t1 = minEllipse[j].center.x;
-		       		y_t1 = minEllipse[j].center.y;
+        inputQuad[0] = cv::Point2f(0,0); inputQuad[1] = cv::Point2f(1,0);
+        inputQuad[3] = cv::Point2f(0,1); inputQuad[2] = cv::Point2f(1,1);
+/*
+        cv::Mat lambda( 5 , 4, CV_32FC1 );
+        lambda = getPerspectiveTransform( inputQuad, outputQuad );
 
-		       		distance = sqrt(pow(x_t0 - x_t1, 2) + pow(y_t0 - y_t1, 2));
-
-		       		if(distance <= holgura){
-			       		counter++;
-			       		counter_verify++;
-			       		sumx += x_t1;
-			       		sumy += y_t1;
-			       		ellipses_to_verify[j] = -1;
-			       	}
-			    }
-
-			    if(counter_verify > 1)
-			    {
-			    	good_ellipses.push_back(Point2f(sumx/counter_verify, sumy/counter_verify));
-			    }
-
-		    }
-     	}
-
-     	// DE ACUERDO AL PATRÓN
-     	if(good_ellipses.size() == 12)
-     	{
-     		flag = true;
-     		for(int i=0; i<good_ellipses.size(); i++)
-     		{
-     			if(good_ellipses[i].x < min_x)
-     				min_x = good_ellipses[i].x;
-
-     			if(good_ellipses[i].y < min_y)
-     				min_y = good_ellipses[i].y;
-
-     			if(good_ellipses[i].x > max_x)
-     				max_x = good_ellipses[i].x;
-
-     			if(good_ellipses[i].y > max_y)
-     				max_y = good_ellipses[i].y;
-     		}
-     	}
-
-     	/*else
-     		flag = false;
+        cv::Mat dst;
+        cv::warpPerspective( cv::Mat( points ), dst, lambda, dst.size());
 */
-     	for (int i = 0; i < good_ellipses.size(); ++i){
-     		circle(drawing, good_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
-			cv::putText(drawing,     std::to_string(i),
-                                      good_ellipses[i], // Coordinates
-                               cv::FONT_HERSHEY_DUPLEX, // Font
-                                                   0.6, // Scale. 2.0 = 2x bigger
-                                   cv::Scalar(255,0,0), // BGR Color
-                                                    2); // Line Thickness (Optional)
-     	}
 
-     	counter = 0;
+    }
 
 
-     	cout<<"Number of good ellipses: "<<good_ellipses.size()<<endl;
-     		cout<<"AUXILIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"<<endl;
 
-     	namedWindow("HELLO", CV_WINDOW_AUTOSIZE);
-		imshow("HELLO", drawing);
+    /*
+    vector<Point2f> pointTras( point.size() );
 
-		key = waitKey(10);
+    float cosAngle = float(cos(double(angle)*M_PI/180.0));
+    float sinAngle = float(sin(double(angle)*M_PI/180.0));
 
-	}
+    float min_x = 999999999.99f, max_x = -999999999.99f;
+    float min_y = 999999999.99f, max_y = -999999999.99f;
+    Point2f p;
+
+    // Traslate and rotation
+    for(size_t i=0; i<point.size(); ++i){
+        p = point[i] - origin;
+
+        p.x =   p.x*cosAngle + p.x*sinAngle;
+        p.y = - p.y*sinAngle + p.y*cosAngle;
+
+        if(min_x>p.x) min_x = p.x; if(max_x<p.x) max_x = p.x;
+        if(min_y>p.y) min_y = p.y; if(max_y<p.y) max_y = p.y;
+
+        // Update
+        pointTras[i] = p;
+    }
+    */
+
 
 }
 
 
-void gridDetection(cv::Mat &frame, cv::Mat &binarized, cv::Mat &morphology, cv::Mat &ellipses, cv::Mat &result){
+bool DoesntRectangleContainPoint(RotatedRect &rectangle, Point2f &point) {
+    //Get the corner points.
+    Point2f corners[4];
+    rectangle.points(corners);
+
+    //Convert the point array to a vector.
+    //https://stackoverflow.com/a/8777619/1997617
+    Point2f* lastItemPointer = (corners + sizeof corners / sizeof corners[0]);
+    vector<Point2f> contour(corners, lastItemPointer);
+
+    //Check if the point is within the rectangle.
+    double indicator = pointPolygonTest(contour, point, false);
+    return (indicator < 0);
+}
+
+void ellipsePurge(Mat &morphology, Mat &ellipses,
+                  const std::vector<RotatedRect> &elipses,
+                  vector<Point2f> &centers,
+                  int width, int height){
+    vector<int> ellipses_to_verify( elipses.size() );
+    Point2f center;
+    int counter_verify;
+    float x_t0, y_t0;
+    float x_t1, y_t1;
+    float disX, disY;
+    float sumx, sumy;
+
+    int counter = 0;
+    float holgura = 1;
+    float distance;
+
+    // Draw ellipse|
+    ellipses = Mat::zeros( morphology.size(), CV_8UC3 );
+
+    for( size_t i = 0; i< elipses.size()-1; i++ ){
+        if( elipses[i].size.width > width/8 || elipses[i].size.height > height/6 ||
+            elipses[i].size.width < 6       || elipses[i].size.height < 6        ||
+            ellipses_to_verify[i] == -1){}
+        else{
+            x_t0 = elipses[i].center.x;
+            y_t0 = elipses[i].center.y;
+
+            counter_verify = 1;
+            sumx = x_t0;
+            sumy = y_t0;
+
+            for( size_t j = i+1; j< elipses.size()-1; j++ ){
+                x_t1 = float(elipses[j].center.x);
+                y_t1 = float(elipses[j].center.y);
+
+                disX = x_t0 - x_t1;
+                disY = y_t0 - y_t1;
+                distance = sqrt(disX*disX + disY*disY);
+
+                if(distance <= holgura){
+                    counter++;
+                    counter_verify++;
+                    sumx += x_t1;
+                    sumy += y_t1;
+                    ellipses_to_verify[j] = -1;
+                }
+            }
+
+            if(counter_verify > 1){
+                center = Point2f(sumx/counter_verify, sumy/counter_verify);
+                circle(ellipses, center, 2, Scalar(0,255,0), -1, 8, 0);
+                ellipse( ellipses, elipses[i], Scalar(0,0,255), 2, 8 );
+
+                // Add to ellipse list
+                centers.push_back(center);
+            }
+
+        }
+    }
+}
+
+void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
+                   cv::Mat &morphology, cv::Mat  &ellipses ,
+                   cv::Mat &result, cv::RotatedRect &minRec,
+                   int &ellipseCount){
 
     int width  = frame.cols;
     int height = frame.rows;
-    float holgura = 1;
-    float distance;
-    int counter = 0;
     vector<Vec4i> hierarchy;
 
 /*
@@ -236,61 +239,71 @@ void gridDetection(cv::Mat &frame, cv::Mat &binarized, cv::Mat &morphology, cv::
     Ellipse purge
     -------------
  */
-    vector<int> ellipses_to_verify( contours.size() );
     vector<Point2f> good_ellipses;
-    int counter_verify;
-    float x_t0, y_t0;
-    float x_t1, y_t1;
-    float disX, disY;
-    float sumx, sumy;
+    ellipsePurge(morphology,ellipses,minEllipse,
+                    good_ellipses,width, height);
 
-    for( size_t i = 0; i< contours.size()-1; i++ ){
-        if( minEllipse[i].size.width > width/8 || minEllipse[i].size.height > height/6 ||
-            minEllipse[i].size.width < 6       || minEllipse[i].size.height < 6        ||
-            ellipses_to_verify[i] == -1){}
-        else{
+    auto it = std::remove_if(good_ellipses.begin(),
+                             good_ellipses.  end(),
+                             [&minRec](Point2f &p){
+                                return DoesntRectangleContainPoint(minRec,p);
+                            });
+    good_ellipses.erase(it,good_ellipses.end());
 
-            x_t0 = minEllipse[i].center.x;
-            y_t0 = minEllipse[i].center.y;
+    //Point2f* corners;
+    //minRec.points(corners);
 
-            counter_verify = 1;
-            sumx = x_t0;
-            sumy = y_t0;
 
-            for( size_t j = i+1; j< contours.size()-1; j++ ){
-                x_t1 = float(minEllipse[j].center.x);
-                y_t1 = float(minEllipse[j].center.y);
+/*
+    Update ROI
+    ----------
+ */
+    if(good_ellipses.size() > 16){
+        minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
+        minRec.size.width = minRec.size.width + 10;
+        minRec.size.height = minRec.size.height + 10;
+    }
+    else if(good_ellipses.size() > 10){
+        minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
+        minRec.size.width = minRec.size.width + 50;
+        minRec.size.height = minRec.size.height + 50;
+    }else{
+        minRec = cv::RotatedRect(cv::Point(frame.rows,         0),
+                                 cv::Point(         0,         0),
+                                 cv::Point(         0,frame.cols));
+    }
 
-                disX = x_t0 - x_t1;
-                disY = y_t0 - y_t1;
-                distance = sqrt(disX*disX + disY*disY);
+/*
+    Grid patron;
+    Pts centers;
+    for(size_t i=0;i<good_ellipses.size();++i)centers.push_back( Pt( good_ellipses[i] ) );
 
-                if(distance <= holgura){
-                    counter++;
-                    counter_verify++;
-                    sumx += x_t1;
-                    sumy += y_t1;
-                    ellipses_to_verify[j] = -1;
-                }
+    mapping(centers,patron,uint(frame.rows),uint(frame.cols),5,4);
+
+    good_ellipses.clear();
+    for(size_t i =0; i<patron.size();++i){
+        for(size_t j =0; j<patron[i].size();++j){
+            if(patron[i][j].x > 0.0f){
+                good_ellipses.push_back( cv::Point2f( patron[i][j].x,patron[i][j].y ) );
             }
-
-            if(counter_verify > 1){
-                good_ellipses.push_back(Point2f(sumx/counter_verify, sumy/counter_verify));
-            }
-
         }
     }
-
-    // Draw ellipse
-    ellipses = Mat::zeros( morphology.size(), CV_8UC3 );
-
+*/
+/*
+    Result
+    ------
+ */
+    frame.copyTo(result);
     for (size_t i = 0; i < good_ellipses.size(); ++i){
-        circle(ellipses, good_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
-        cv::putText(ellipses,      std::to_string(i),
-                                    good_ellipses[i], // Coordinates
-                             cv::FONT_HERSHEY_DUPLEX, // Font
-                                                 0.6, // Scale. 2.0 = 2x bigger
-                                 cv::Scalar(0,0,255), // BGR Color
-                                                  2); // Line Thickness (Optional)
+        circle(result, good_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
+        putText(result,      std::to_string(i),
+                              good_ellipses[i], // Coordinates
+                       cv::FONT_HERSHEY_DUPLEX, // Font
+                                           0.6, // Scale. 2.0 = 2x bigger
+                           cv::Scalar(0,0,255), // BGR Color
+                                            2); // Line Thickness (Optional)
     }
+
+    // Save ellipse count
+    ellipseCount = int(good_ellipses.size());
 }

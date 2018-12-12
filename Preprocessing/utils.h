@@ -7,6 +7,8 @@
 #include <math.h>
 #include <string>
 #include <iostream>
+
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #ifndef UTILS_H
