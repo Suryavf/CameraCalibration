@@ -28,22 +28,21 @@ int main( int argc, char** argv ) {
     std::vector<cv::Vec3f> circles;
     HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 1, src_gray.rows/8, 200, 100, 0, 0 );
 
-    std::vector<Point> pts(circles.size());
+    Pts pts(circles.size());
 
     for( uint i = 0; i < pts.size(); i++ ){
-        pts[i] = Point(circles[i][0],circles[i][1]);
+        pts[i] = Pt(circles[i][0],circles[i][1]);
     }
 
 /*
  *  Mapping
  *  -------  
  */
-    std::vector< std::vector<Point> > patron;
+    Grid patron;
     mapping(pts,patron,src.rows,src.cols,5,4);
 
 // -----------------------------------------------------------------------------------------------------
-
-    /*
+    // Draw centers
     for( size_t i = 0; i < circles.size(); i++ ){
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
@@ -53,17 +52,28 @@ int main( int argc, char** argv ) {
         // circle outline
         circle( src, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
     }
-    */
+    
+    // Draw numbers
+    for(uint i = 0; i<patron.size(); ++i){
+        for(uint j = 0; j<patron[i].size(); ++j){ 
+            cv::putText(src,       std::to_string(i+j),
+              cv::Point(patron[i][j].x,patron[i][j].y), // Coordinates
+                               cv::FONT_HERSHEY_DUPLEX, // Font
+                                                   0.8, // Scale. 2.0 = 2x bigger
+                                   cv::Scalar(0,0,255), // BGR Color
+                                                    1); // Line Thickness (Optional)
+        }
+    }
 
 /*
  *  Display image
  *  -------------  
  */
-    /*
+    
     cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );
     cv::imshow( "Display window", src );
 
     cv::waitKey(0);
-    */
+    
     return 0;
 }

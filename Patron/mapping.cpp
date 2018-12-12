@@ -1,5 +1,7 @@
 #include "mapping.h"
 
+T umb = 10.0;
+
 //  ===============================================================
 //  Runtimes
 //  ===============================================================
@@ -21,13 +23,13 @@
  *  Sort functions
  *  --------------
  */
-bool sortDistance(const Point &a, const Point &b){
+bool sortDistance(const Pt &a, const Pt &b){
     return ( a.d < b.d );
 }
-bool sortX(const Point &a, const Point &b){
+bool sortX(const Pt &a, const Pt &b){
     return ( a.x < b.x );
 }
-bool sortY(const Point &a, const Point &b){
+bool sortY(const Pt &a, const Pt &b){
     return ( a.y < b.y );
 }
 
@@ -35,19 +37,19 @@ bool sortY(const Point &a, const Point &b){
  *  Get corners
  *  -----------
  */
-void getCorners(const std::vector<Point>  &pts,
-                            uint &IL, uint &IR,
-                            uint &SL, uint &SR,
-                            const uint &n_colsSRC,
-                            const uint &n_rowsSRC){
+void getCorners(const Pts &points,
+                    uint &IL, uint &IR,
+                    uint &SL, uint &SR,
+                    const uint &n_colsSRC,
+                    const uint &n_rowsSRC){
     T x_cols,y_rows,aux;
     T x,y;
     T MAX_T = std::numeric_limits<T>::max();
     T IL_min = MAX_T, SL_min = MAX_T, 
       IR_min = MAX_T, SR_min = MAX_T;
-    for( uint i = 0; i < pts.size(); i++ ){
-        x = pts[i].x; x_cols = n_colsSRC - x;
-        y = pts[i].y; y_rows = n_rowsSRC - y;
+    for( uint i = 0; i < points.size(); i++ ){
+        x = points[i].x; x_cols = n_colsSRC - x;
+        y = points[i].y; y_rows = n_rowsSRC - y;
 
         // Inferior Left
         aux = x*x + y*y;
@@ -73,8 +75,8 @@ void getCorners(const std::vector<Point>  &pts,
 
 
 
-void initPatron(const std::vector<Point>  &pts,
-                std::vector< std::vector<Point> > &patron,
+void initPatron(const Pts  &points,
+                Grid &patron,
                 Line &L1, Line &L2,
                 const uint &IL, const uint &IR,
                 const uint &SL, const uint &SR,
@@ -85,12 +87,12 @@ void initPatron(const std::vector<Point>  &pts,
  *  Definir orientacion
  *  -------------------
  */ 
-    std::vector<Point> ptsL1(pts); 
-    std::vector<Point> ptsL2(pts); 
+    Pts ptsL1(points); 
+    Pts ptsL2(points); 
     T sumDL1p = 0; T sumDL2p = 0;
 
 //- Line create: L1
-    for(uint i = 0; i<pts.size(); ++i) 
+    for(uint i = 0; i<points.size(); ++i) 
         distance(ptsL1[i], L1, ptsL1[i].d);
     std::sort(ptsL1.begin(),ptsL1.end(),sortDistance);
 
@@ -118,11 +120,11 @@ void initPatron(const std::vector<Point>  &pts,
  *  Points Array
  *  ------------
  */ 
-    patron = std::vector< std::vector<Point> >(n_rows, std::vector<Point>(n_cols));
-    patron[    0   ][    0   ] = pts[ IL ];
-    patron[n_rows-1][    0   ] = pts[ SL ];
-    patron[    0   ][n_cols-1] = pts[ IR ];
-    patron[n_rows-1][n_cols-1] = pts[ SR ];
+    patron = Grid(n_rows, Pts(n_cols));
+    patron[    0   ][    0   ] = points[ IL ];
+    patron[n_rows-1][    0   ] = points[ SL ];
+    patron[    0   ][n_cols-1] = points[ IR ];
+    patron[n_rows-1][n_cols-1] = points[ SR ];
 
     for(uint i = 0; i<n_cols-2; ++i){
         ptsL1[i].check = false;
@@ -135,8 +137,8 @@ void initPatron(const std::vector<Point>  &pts,
 }
 
 
-void addPatron(std::vector<Point>  &pts,
-               std::vector< std::vector<Point> > &patron,
+void addPatron(Pts  &points,
+               Grid &patron,
                Line &L,
                const uint &n_rows, const uint &n_cols,
                const uint &position,
@@ -146,39 +148,39 @@ void addPatron(std::vector<Point>  &pts,
 //- Line horizontal
     if(horz){
         // Calculate distance
-        for(i = 0; i<pts.size(); ++i) 
-            distance(pts[i], L, pts[i].d);
+        for(i = 0; i<points.size(); ++i) 
+            distance(points[i], L, points[i].d);
         
         // Sort
-        std::sort(pts.begin(),pts.end(),sortDistance);
-        std::sort(pts.begin(),pts.begin()+n_cols-2,sortX);
+        std::sort(points.begin(),points.end(),sortDistance);
+        std::sort(points.begin(),points.begin()+n_cols-2,sortX);
         
         for(i = 0; i<n_cols-2; ++i){
-            pts[i].check = false;
-            patron[position][i+1] = pts[i];
+            points[i].check = false;
+            patron[position][i+1] = points[i];
         }
     }
 
 //- Line Vertical
     else{
         // Calculate distance
-        for(i = 0; i<pts.size(); ++i) 
-            distance(pts[i], L, pts[i].d);
+        for(i = 0; i<points.size(); ++i) 
+            distance(points[i], L, points[i].d);
 
         // Sort
-        std::sort(pts.begin(),pts.end(),sortDistance);
-        std::sort(pts.begin(),pts.begin()+n_rows-2,sortY);
+        std::sort(points.begin(),points.end(),sortDistance);
+        std::sort(points.begin(),points.begin()+n_rows-2,sortY);
 
         for(i = 0; i<n_rows-2; ++i){
-            pts[i].check = false;
-            patron[i+1][position] = pts[i];
+            points[i].check = false;
+            patron[i+1][position] = points[i];
         }
     }
 }
 
 
-void mapping(std::vector<Point>  &pts,
-             std::vector< std::vector<Point> > &patron,
+void mapping(Pts  &points,
+             Grid &patron,
              const uint &n_rowsImg, const uint &n_colsImg,
              const uint &len_x, const uint &len_y){
 /*
@@ -186,10 +188,10 @@ void mapping(std::vector<Point>  &pts,
  *  -------
  */ 
     uint IL, IR, SL, SR;
-    getCorners(pts,IL,IR,SL,SR, n_colsImg, n_rowsImg);
+    getCorners(points,IL,IR,SL,SR, n_colsImg, n_rowsImg);
     
-    pts[ IL ].check = false; pts[ IR ].check = false;
-    pts[ SL ].check = false; pts[ SR ].check = false;
+    points[ IL ].check = false; points[ IR ].check = false;
+    points[ SL ].check = false; points[ SR ].check = false;
     
 /*
  *  Definir orientacion
@@ -197,20 +199,20 @@ void mapping(std::vector<Point>  &pts,
  */ 
     uint n_rows, n_cols;
 
-    Line L1 = Line(pts[ IL ],pts[ IR ]);
-    Line L2 = Line(pts[ IL ],pts[ SL ]);
+    Line L1 = Line(points[ IL ],points[ IR ]);
+    Line L2 = Line(points[ IL ],points[ SL ]);
 
-    initPatron(pts,patron,L1,L2,IL,IR,SL,SR,len_x,len_y,n_rows,n_cols);
+    initPatron(points,patron,L1,L2,IL,IR,SL,SR,len_x,len_y,n_rows,n_cols);
 
 /*
  *  Two more
  *  --------
  */ 
-    Line L3 = Line(pts[SL],pts[SR]);
-    Line L4 = Line(pts[IR],pts[SR]);
+    Line L3 = Line(points[SL],points[SR]);
+    Line L4 = Line(points[IR],points[SR]);
 
-    addPatron(pts,patron,L3,n_rows, n_cols,n_rows-1,true );
-    addPatron(pts,patron,L4,n_rows, n_cols,n_cols-1,false);
+    addPatron(points,patron,L3,n_rows, n_cols,n_rows-1,true );
+    addPatron(points,patron,L4,n_rows, n_cols,n_cols-1,false);
 
     
 /*
@@ -220,7 +222,7 @@ void mapping(std::vector<Point>  &pts,
     Line L;
     for(uint i = 1; i<n_rows-1; ++i){
         L = Line(patron[i][0],patron[i][n_cols-1]);
-        addPatron(pts,patron,L,n_rows, n_cols,i);
+        addPatron(points,patron,L,n_rows, n_cols,i);
     }
     
     
