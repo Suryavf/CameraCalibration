@@ -260,13 +260,13 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
  */
     if(good_ellipses.size() > 16){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width = minRec.size.width + 10;
-        minRec.size.height = minRec.size.height + 10;
+        minRec.size.width = minRec.size.width + 50;
+        minRec.size.height = minRec.size.height + 50;
     }
     else if(good_ellipses.size() > 10){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width = minRec.size.width + 50;
-        minRec.size.height = minRec.size.height + 50;
+        minRec.size.width = minRec.size.width + 100;
+        minRec.size.height = minRec.size.height + 100;
     }else{
         minRec = cv::RotatedRect(cv::Point(frame.rows,         0),
                                  cv::Point(         0,         0),
