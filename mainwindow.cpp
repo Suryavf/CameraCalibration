@@ -137,11 +137,11 @@ void MainWindow::on_pushButton_clicked(){
 
             ui->accuracy->setText(QString::number( int(float(countTrue)*100/float(countFrames))  ) + " %");
         }
+        else{
+             break;
+        }
+
         qApp->processEvents();
-
-        if (frame.empty())
-              break;
-
     }
     outfile.close();
 
