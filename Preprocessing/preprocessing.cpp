@@ -194,7 +194,7 @@ void ellipsePurge(Mat &morphology, Mat &ellipses,
         }
     }
 }
-vector<Point2f> get_intermediate_points(Point p, vector<Point2f> intermediate_vectors)
+vector<Point2f> get_intermediate_sorted_points(Point p, vector<Point2f> intermediate_vectors)
 {
     vector<Point2f> result;
     if(intermediate_vectors.size() == 3 )
@@ -446,19 +446,80 @@ vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
         sorted_ellipses = sorted_ellipses2;
 
     }
-    vector<Point2f> sorted_ellipses_final;
 
+    //============================================FUNCTION, HOW?============================================================
+    vector<Point2f> sorted_ellipses_final(20);
+
+    //Adding first row 0 to 4
     vector<Point2f> intermediate_vectors = get_intermediate_points(sorted_ellipses[0], sorted_ellipses[1], good_ellipses);
-    intermediate_vectors  = get_intermediate_points(sorted_ellipses[0], intermediate_vectors);
-    sorted_ellipses_final.push_back(sorted_ellipses[0]);
-    cout<<intermediate_vectors.size()<<endl;
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[0], intermediate_vectors); // consider the most near to sorted
+
+    sorted_ellipses_final[0] = sorted_ellipses[0];
+
     for (uint i=0; i<intermediate_vectors.size(); i++)
     {
-        sorted_ellipses_final.push_back(intermediate_vectors[i]);
+        sorted_ellipses_final[i+1] = intermediate_vectors[i];
     }
-    sorted_ellipses_final.push_back(sorted_ellipses[1]);
+    sorted_ellipses_final[4] = sorted_ellipses[1];
 
 
+
+
+    //Adding first row 5, 10, 15
+    intermediate_vectors = get_intermediate_points(sorted_ellipses[0], sorted_ellipses[2], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[0], intermediate_vectors); // consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[(i+1)*5] = intermediate_vectors[i];
+    }
+    sorted_ellipses_final[15] = sorted_ellipses[2];
+
+
+    //Adding first row 16 to 19
+    intermediate_vectors = get_intermediate_points(sorted_ellipses[2], sorted_ellipses[3], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[2], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[i+16] = intermediate_vectors[i];
+    }
+    sorted_ellipses_final[19] = sorted_ellipses[3];
+
+
+
+    //Adding first row 9 , 14
+    intermediate_vectors = get_intermediate_points(sorted_ellipses[1], sorted_ellipses[3], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[1], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[9+(i*5)] = intermediate_vectors[i];
+    }
+
+    //Adding first row 6 to 8
+    intermediate_vectors = get_intermediate_points(sorted_ellipses_final[5], sorted_ellipses_final[9], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses_final[5], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[i+6] = intermediate_vectors[i];
+    }
+
+    //Adding first row 11 to 13
+    intermediate_vectors = get_intermediate_points(sorted_ellipses_final[10], sorted_ellipses_final[14], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses_final[10], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[i+11] = intermediate_vectors[i];
+    }
+
+
+
+
+
+    //=========================================================================================================================
 
     return sorted_ellipses_final;
 }
@@ -588,7 +649,7 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
     rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
     imshow("RESULT", result);
-    waitKey(0);
+    waitKey(1);
 }
 
 
