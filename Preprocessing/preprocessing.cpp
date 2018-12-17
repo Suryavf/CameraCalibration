@@ -197,6 +197,12 @@ void ellipsePurge(Mat &morphology, Mat &ellipses,
 vector<Point2f> get_intermediate_sorted_points(Point p, vector<Point2f> intermediate_vectors)
 {
     vector<Point2f> result;
+    if(intermediate_vectors.size() == 1)
+    {
+        result.push_back(intermediate_vectors[0]);
+        return result;
+    }
+
     if(intermediate_vectors.size() == 3 )
     {
         float d1 = sqrt(pow(p.x - intermediate_vectors[0].x,2) + pow(p.y - intermediate_vectors[0].y,2) );
@@ -316,7 +322,7 @@ vector<Point2f> get_intermediate_points(Point p1, Point p2, vector<Point2f> good
     }
     return intermediate_vectors;
 }
-vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
+vector<Point2f> ellipses_order20(vector<Point2f> good_ellipses)
 {
     vector<Point2f> convex_hull;
     vector<Point2f> sorted_ellipses;
@@ -524,6 +530,225 @@ vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
     return sorted_ellipses_final;
 }
 
+
+// ================================= AUXILIO ==================================================================================
+
+vector<Point2f> ellipses_order12(vector<Point2f> good_ellipses)
+{
+    vector<Point2f> convex_hull;
+    vector<Point2f> sorted_ellipses;
+
+
+    convexHull(good_ellipses, convex_hull, true); // Get corners
+    convex_hull.push_back(convex_hull[0]);  // To ensure the square, searching the change to add the last corner
+    convex_hull.push_back(convex_hull[1]);
+
+    float x_s = convex_hull[0].x;
+    float y_s = convex_hull[0].y;
+    float m = (convex_hull[1].y - y_s)/(convex_hull[1].x - x_s + 0.0001); //Pendiente
+    float holgura = 5; // In order to say the element is inside the line (recta)
+    float y_eq = 0; // Equation with respect y
+    float x_eq = 0; // Equation with respect x
+
+    for(uint i=1; i<convex_hull.size(); i++)
+    {
+        if(abs(convex_hull[i].x - x_s) > abs(convex_hull[i].y - y_s)) // X mayor -> calculate the normal eq in function to y
+        {
+            y_eq = m*(convex_hull[i].x - x_s) + y_s;
+
+            if(abs(y_eq - convex_hull[i].y) >= holgura)
+            {
+                sorted_ellipses.push_back(convex_hull[i-1]);
+                x_s = convex_hull[i-1].x;
+                y_s = convex_hull[i-1].y;
+                m = (convex_hull[i].y - y_s)/(convex_hull[i].x - x_s + 0.0001);
+            }
+
+        }
+        else
+        {
+            x_eq = (convex_hull[i].y - y_s)/m + x_s;
+
+            if(abs(x_eq - convex_hull[i].x) >= holgura)
+            {
+                sorted_ellipses.push_back(convex_hull[i-1]);
+                x_s = convex_hull[i-1].x;
+                y_s = convex_hull[i-1].y;
+                m = (convex_hull[i].y - y_s)/(convex_hull[i].x - x_s + 0.0001);
+            }
+
+        }
+
+
+    }
+
+    //cout<<sorted_ellipses.size()<<endl;
+    x_s = sorted_ellipses[0].x;
+    y_s = sorted_ellipses[0].y;
+    m = (sorted_ellipses[1].y - y_s)/(sorted_ellipses[1].x - x_s + 0.0001);
+
+    int count_dist1 = 0;
+    int count_dist2 = 0;
+
+    // Count the number of points from 0 to 1 position
+    for(uint i=0; i<good_ellipses.size(); i++)
+    {
+        if(abs(good_ellipses[i].x - x_s) > abs(good_ellipses[i].y - y_s))
+        {
+            y_eq = m*(good_ellipses[i].x - x_s) + y_s;
+
+            if(abs(y_eq - good_ellipses[i].y) >= holgura)
+            {
+                count_dist1++;
+            }
+
+        }
+        else
+        {
+            x_eq = (good_ellipses[i].y - y_s)/m + x_s;
+
+            if(abs(x_eq - good_ellipses[i].x) >= holgura)
+            {
+                count_dist1++;
+            }
+
+        }
+    }
+
+
+
+
+    x_s = sorted_ellipses[1].x;
+    y_s = sorted_ellipses[1].y;
+    m = (sorted_ellipses[2].y - y_s)/(sorted_ellipses[2].x - x_s + 0.0001);
+
+    // Count the number of points from 1 to 2 position
+    for(uint i=0; i<good_ellipses.size(); i++)
+    {
+        if(abs(good_ellipses[i].x - x_s) > abs(good_ellipses[i].y - y_s))
+        {
+            y_eq = m*(good_ellipses[i].x - x_s) + y_s;
+
+            if(abs(y_eq - good_ellipses[i].y) >= holgura)
+            {
+                count_dist2++;
+            }
+
+        }
+        else
+        {
+            x_eq = (good_ellipses[i].y - y_s)/m + x_s;
+
+            if(abs(x_eq - good_ellipses[i].x) >= holgura)
+            {
+                count_dist2++;
+            }
+
+        }
+    }
+
+    // Sort the corners
+    if(count_dist1 < count_dist2)
+    {
+        Point p = sorted_ellipses[2];
+        sorted_ellipses[2] = sorted_ellipses[3];
+        sorted_ellipses[3] = p;
+        cout<<"FORMA AMPLIA"<<endl;
+    }
+    else
+    {
+        vector<Point2f> sorted_ellipses2;
+        sorted_ellipses2.push_back(sorted_ellipses[3]);
+        sorted_ellipses2.push_back(sorted_ellipses[0]);
+        sorted_ellipses2.push_back(sorted_ellipses[2]);
+        sorted_ellipses2.push_back(sorted_ellipses[1]);
+        cout<<"FORMA ALTA"<<endl;
+        sorted_ellipses = sorted_ellipses2;
+
+    }
+
+    //============================================FUNCTION, HOW?============================================================
+    vector<Point2f> sorted_ellipses_final(12);
+
+    //Adding first row 0 to 4
+    vector<Point2f> intermediate_vectors = get_intermediate_points(sorted_ellipses[0], sorted_ellipses[1], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[0], intermediate_vectors); // consider the most near to sorted
+
+    sorted_ellipses_final[0] = sorted_ellipses[0];
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[i+1] = intermediate_vectors[i];
+    }
+    sorted_ellipses_final[3] = sorted_ellipses[1];
+
+
+
+
+    //Adding first row 4
+    intermediate_vectors = get_intermediate_points(sorted_ellipses[0], sorted_ellipses[2], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[0], intermediate_vectors); // consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[4] = intermediate_vectors[0];
+    }
+    sorted_ellipses_final[8] = sorted_ellipses[2];
+
+
+    //Adding first row 9, 10
+    intermediate_vectors = get_intermediate_points(sorted_ellipses[2], sorted_ellipses[3], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[2], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[i+9] = intermediate_vectors[i];
+    }
+    sorted_ellipses_final[11] = sorted_ellipses[3];
+
+
+
+    //Adding first row 7
+    intermediate_vectors = get_intermediate_points(sorted_ellipses[1], sorted_ellipses[3], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses[1], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[7] = intermediate_vectors[0];
+    }
+
+    //Adding first row 5, 6
+    intermediate_vectors = get_intermediate_points(sorted_ellipses_final[4], sorted_ellipses_final[7], good_ellipses);
+    intermediate_vectors  = get_intermediate_sorted_points(sorted_ellipses_final[4], intermediate_vectors); //consider the most near to sorted
+
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final[i+5] = intermediate_vectors[i];
+    }
+
+
+
+    //=========================================================================================================================
+
+    return sorted_ellipses_final;
+}
+
+
+
+
+
+// ============================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
 void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
                    cv::Mat &morphology, cv::Mat  &ellipses ,
                    cv::Mat &result, cv::RotatedRect &minRec,
@@ -629,7 +854,10 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     vector<Point2f> sorted_ellipses = good_ellipses;
 
     if(good_ellipses.size() == 20)
-        sorted_ellipses = ellipses_order(good_ellipses);
+        sorted_ellipses = ellipses_order20(good_ellipses);
+
+    if(good_ellipses.size() == 12)
+        sorted_ellipses = ellipses_order12(good_ellipses);
 
 
     frame.copyTo(result);
