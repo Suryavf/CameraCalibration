@@ -244,6 +244,90 @@ vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
 
 
     }
+    cout<<sorted_ellipses.size()<<endl;
+    x_s = sorted_ellipses[0].x;
+    y_s = sorted_ellipses[0].y;
+    m = (sorted_ellipses[1].y - y_s)/(sorted_ellipses[1].x - x_s + 0.0001);
+
+    int count_dist1 = 0;
+    int count_dist2 = 0;
+
+    for(uint i=0; i<good_ellipses.size(); i++)
+    {
+        if(abs(good_ellipses[i].x - x_s) > abs(good_ellipses[i].y - y_s))
+        {
+            y_eq = m*(good_ellipses[i].x - x_s) + y_s;
+
+            if(abs(y_eq - good_ellipses[i].y) >= holgura)
+            {
+                count_dist1++;
+            }
+
+        }
+        else
+        {
+            x_eq = (good_ellipses[i].y - y_s)/m + x_s;
+
+            if(abs(x_eq - good_ellipses[i].x) >= holgura)
+            {
+                count_dist1++;
+            }
+
+        }
+    }
+
+
+
+
+    x_s = sorted_ellipses[1].x;
+    y_s = sorted_ellipses[1].y;
+    m = (sorted_ellipses[2].y - y_s)/(sorted_ellipses[2].x - x_s + 0.0001);
+
+    for(uint i=0; i<good_ellipses.size(); i++)
+    {
+        if(abs(good_ellipses[i].x - x_s) > abs(good_ellipses[i].y - y_s))
+        {
+            y_eq = m*(good_ellipses[i].x - x_s) + y_s;
+
+            if(abs(y_eq - good_ellipses[i].y) >= holgura)
+            {
+                count_dist2++;
+            }
+
+        }
+        else
+        {
+            x_eq = (good_ellipses[i].y - y_s)/m + x_s;
+
+            if(abs(x_eq - good_ellipses[i].x) >= holgura)
+            {
+                count_dist2++;
+            }
+
+        }
+    }
+
+
+    if(count_dist1 < count_dist2)
+    {
+        Point p = sorted_ellipses[2];
+        sorted_ellipses[2] = sorted_ellipses[3];
+        sorted_ellipses[3] = p;
+        cout<<"FORMA AMPLIA"<<endl;
+    }
+    else
+    {
+        vector<Point2f> sorted_ellipses2;
+        sorted_ellipses2.push_back(sorted_ellipses[3]);
+        sorted_ellipses2.push_back(sorted_ellipses[0]);
+        sorted_ellipses2.push_back(sorted_ellipses[2]);
+        sorted_ellipses2.push_back(sorted_ellipses[1]);
+        cout<<"FORMA ALTA"<<endl;
+        sorted_ellipses = sorted_ellipses2;
+
+    }
+
+
 
     return sorted_ellipses;
 }
@@ -372,8 +456,8 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     Point2f pt1 = Point2f(minRec.center.x - minRec.size.width/2, minRec.center.y - minRec.size.height/2);
     Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
     rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
-    //imshow("RESULT", result);
-    //waitKey(1);
+    imshow("RESULT", result);
+    waitKey(1);
 }
 
 
