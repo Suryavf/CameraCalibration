@@ -16,34 +16,38 @@ void distance(const cv::Point2f &p1, const cv::Point2f &p2, float &dist){
 void getCorners(const std::vector<cv::Point2f> &points,
                     uint &IL, uint &IR,
                     uint &SL, uint &SR,
-                    const uint &cols,
-                    const uint &rows){
-    float x_cols,y_rows,aux;
-    float x,y;
+                    const cv::RotatedRect &ROI){
+    float aux;
     float MAX_T = std::numeric_limits<T>::max();
     float IL_min = MAX_T, SL_min = MAX_T,
           IR_min = MAX_T, SR_min = MAX_T;
+
+    Point2f diff;
+    cv::Point2f cornerROI[4];
+    ROI.points( cornerROI );
     for( uint i = 0; i < points.size(); i++ ){
-        x = points[i].x; x_cols = cols - x;
-        y = points[i].y; y_rows = rows - y;
 
         // Inferior Left
-        aux = x*x + y*y;
+        diff = points[i] - cornerROI[1];
+        aux = diff.x*diff.x + diff.y*diff.y;
         if (IL_min>aux){ IL_min = aux;
                          IL     =   i;}
 
         // Superior Left
-        aux = x*x + y_rows*y_rows;
+        diff = points[i] - cornerROI[0];
+        aux = diff.x*diff.x + diff.y*diff.y;
         if (SL_min>aux){ SL_min = aux;
                          SL     =   i;}
 
         // Inferior Right
-        aux = x_cols*x_cols + y*y;
+        diff = points[i] - cornerROI[2];
+        aux = diff.x*diff.x + diff.y*diff.y;
         if (IR_min>aux){ IR_min = aux;
                          IR     =   i;}
 
         // Superior Right
-        aux = x_cols*x_cols + y_rows*y_rows;
+        diff = points[i] - cornerROI[3];
+        aux = diff.x*diff.x + diff.y*diff.y;
         if (SR_min>aux){ SR_min = aux;
                          SR     =   i;}
     }
@@ -52,7 +56,7 @@ void getCorners(const std::vector<cv::Point2f> &points,
 
 
 
-void sortingPoints(vector<Point2f> &points, const uint &cols, const uint &rows){
+void sortingPoints(vector<Point2f> &points, const cv::RotatedRect &ROI){
 
     if(points.size()<2){
         // No hace nada
@@ -66,9 +70,72 @@ void sortingPoints(vector<Point2f> &points, const uint &cols, const uint &rows){
                                                   });
     }
     else{
-        uint IL, IR, SL, SR;
-        getCorners(points,IL,IR,SL,SR,cols,rows);
+    /*
+     *   IL ______________ IR
+     *     |  -->x        |
+     *     | |            |
+     *     | v y          |
+     *     |______________|
+     *   SL                SR
+     */
+        // Copy data
+        vector<Point2f> cpPts(points.size());
+        vector<  int  > index(points.size());
+        for(size_t i=0;i<size_t(index.size());++i)
+            index[i] = int(i);
 
+        //cout << "Estoy aqui!! (Copy data)" << endl;
+
+        // Corners
+        uint IL, IR, SL, SR;
+        getCorners(points,IL,IR,SL,SR,ROI);
+
+        //cout << "Estoy aqui!! (Corners)" << endl;
+
+        // Traslate
+        for(size_t i=0;i<size_t(index.size());++i)
+            cpPts[i] = points[i] - points[IL];
+
+        // ---------------------------
+        Mat a = Mat::zeros( Size(300,300), CV_8UC3 );
+        for(size_t i=0;i<size_t(index.size());++i)
+            circle(a, cpPts[i] + Point2f(100,100), 2, Scalar(0,255,0), -1, 8, 0);
+        // ---------------------------
+
+        imshow( "Antes de rotar", a );                   // Show our image inside it.
+        waitKey(1);
+
+
+        // Calcular angulo
+        float h = sqrt( cpPts[IR].x*cpPts[IR].x + cpPts[IR].y*cpPts[IR].y );
+        float cos = cpPts[IR].x/h;
+        float sen = cpPts[IR].y/h;
+
+
+        // Rotate
+        float x,y;
+        for(size_t i=0;i<size_t(index.size());++i){
+            x = cpPts[i].x;  y = cpPts[i].y;
+            cpPts[i].x =   cos*x + sen*y;
+            cpPts[i].y = - sen*x + cos*y;
+
+            cout << "(" << cpPts[i].x << "," << cpPts[i].y << ")\t";
+        }
+
+        // ---------------------------
+        Mat b = Mat::zeros( Size(300,300), CV_8UC3 );
+        for(size_t i=0;i<size_t(index.size());++i)
+            circle(b, cpPts[i] + Point2f(100,100), 2, Scalar(0,255,0), -1, 8, 0);
+        // ---------------------------
+        imshow( "Luego de rotar", b );                   // Show our image inside it.
+        waitKey(1);
+
+
+        //std::cin.get();
+
+
+
+/*
         // Transform
         cv::Point2f * inputQuad = new cv::Point2f[4];
         cv::Point2f *outputQuad = new cv::Point2f[4];
@@ -78,13 +145,14 @@ void sortingPoints(vector<Point2f> &points, const uint &cols, const uint &rows){
 
         inputQuad[0] = cv::Point2f(0,0); inputQuad[1] = cv::Point2f(1,0);
         inputQuad[3] = cv::Point2f(0,1); inputQuad[2] = cv::Point2f(1,1);
+ */
 /*
         cv::Mat lambda( 5 , 4, CV_32FC1 );
         lambda = getPerspectiveTransform( inputQuad, outputQuad );
 
         cv::Mat dst;
         cv::warpPerspective( cv::Mat( points ), dst, lambda, dst.size());
-*/
+ */
 
     }
 
@@ -260,18 +328,20 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
  */
     if(good_ellipses.size() > 16){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width = minRec.size.width + 50;
-        minRec.size.height = minRec.size.height + 50;
+        minRec.size.width  = minRec.size.width  + 10;
+        minRec.size.height = minRec.size.height + 10;
     }
     else if(good_ellipses.size() > 10){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width = minRec.size.width + 100;
-        minRec.size.height = minRec.size.height + 100;
+        minRec.size.width  = minRec.size.width  + 50;
+        minRec.size.height = minRec.size.height + 50;
     }else{
         minRec = cv::RotatedRect(cv::Point(frame.rows,         0),
                                  cv::Point(         0,         0),
                                  cv::Point(         0,frame.cols));
     }
+
+    sortingPoints(good_ellipses,minRec);
 
 /*
     Grid patron;
