@@ -194,8 +194,128 @@ void ellipsePurge(Mat &morphology, Mat &ellipses,
         }
     }
 }
+vector<Point2f> get_intermediate_points(Point p, vector<Point2f> intermediate_vectors)
+{
+    vector<Point2f> result;
+    if(intermediate_vectors.size() == 3 )
+    {
+        float d1 = sqrt(pow(p.x - intermediate_vectors[0].x,2) + pow(p.y - intermediate_vectors[0].y,2) );
+        float d2 = sqrt(pow(p.x - intermediate_vectors[1].x,2) + pow(p.y - intermediate_vectors[1].y,2) );
+        float d3 = sqrt(pow(p.x - intermediate_vectors[2].x,2) + pow(p.y - intermediate_vectors[2].y,2) );
 
+        if(d1 < d2 && d1 < d3)
+        {
+            result.push_back(intermediate_vectors[0]);
 
+            if(d2 < d3)
+            {
+                result.push_back(intermediate_vectors[1]);
+                result.push_back(intermediate_vectors[2]);
+            }
+
+            else
+            {
+                result.push_back(intermediate_vectors[2]);
+                result.push_back(intermediate_vectors[1]);
+            }
+        }
+
+        if(d2 < d1 && d2 < d3)
+        {
+            result.push_back(intermediate_vectors[1]);
+
+            if(d1 < d3)
+            {
+                result.push_back(intermediate_vectors[0]);
+                result.push_back(intermediate_vectors[2]);
+            }
+
+            else
+            {
+                result.push_back(intermediate_vectors[2]);
+                result.push_back(intermediate_vectors[0]);
+            }
+        }
+
+        if(d3 < d1 && d3< d2)
+        {
+            result.push_back(intermediate_vectors[2]);
+
+            if(d1 < d2)
+            {
+                result.push_back(intermediate_vectors[0]);
+                result.push_back(intermediate_vectors[1]);
+            }
+
+            else
+            {
+                result.push_back(intermediate_vectors[1]);
+                result.push_back(intermediate_vectors[0]);
+            }
+        }
+
+    }
+
+    if(intermediate_vectors.size() == 2)
+    {
+        float d1 = sqrt(pow(p.x - intermediate_vectors[0].x,2) + pow(p.y - intermediate_vectors[0].y,2) );
+        float d2 = sqrt(pow(p.x - intermediate_vectors[1].x,2) + pow(p.y - intermediate_vectors[1].y,2) );
+
+        if(d1 < d2)
+        {
+            result.push_back(intermediate_vectors[0]);
+            result.push_back(intermediate_vectors[1]);
+        }
+
+        else
+        {
+            result.push_back(intermediate_vectors[1]);
+            result.push_back(intermediate_vectors[0]);
+        }
+
+    }
+
+    return result;
+
+}
+vector<Point2f> get_intermediate_points(Point p1, Point p2, vector<Point2f> good_ellipses)
+{
+    vector<Point2f> intermediate_vectors;
+    float m = (p2.y - p1.y)/(p2.x - p1.x + 0.0001);
+    float y_eq, x_eq;
+    int holgura = 5;
+
+    for(uint i=0; i<good_ellipses.size(); i++)
+    {
+        if( !(
+                (abs(good_ellipses[i].x-p1.x)<1 && abs(good_ellipses[i].y - p1.y)<1)
+                || (abs(good_ellipses[i].x - p2.x)<1 && abs(good_ellipses[i].y - p2.y)<1)
+                    ))
+        {
+            if(abs(good_ellipses[i].x - p1.x) > abs(good_ellipses[i].y - p1.y))
+            {
+                y_eq = m*(good_ellipses[i].x - p1.x) + p1.y;
+
+                if(abs(y_eq - good_ellipses[i].y) <= holgura)
+                {
+                    intermediate_vectors.push_back(good_ellipses[i]);
+                }
+
+            }
+            else
+            {
+                x_eq = (good_ellipses[i].y - p1.y)/m + p1.x;
+
+                if(abs(x_eq - good_ellipses[i].x) <= holgura)
+                {
+                    intermediate_vectors.push_back(good_ellipses[i]);
+                }
+
+            }
+        }
+    }
+    return intermediate_vectors;
+}
 vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
 {
     vector<Point2f> convex_hull;
@@ -244,7 +364,7 @@ vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
 
 
     }
-    cout<<sorted_ellipses.size()<<endl;
+    //cout<<sorted_ellipses.size()<<endl;
     x_s = sorted_ellipses[0].x;
     y_s = sorted_ellipses[0].y;
     m = (sorted_ellipses[1].y - y_s)/(sorted_ellipses[1].x - x_s + 0.0001);
@@ -326,10 +446,21 @@ vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
         sorted_ellipses = sorted_ellipses2;
 
     }
+    vector<Point2f> sorted_ellipses_final;
+
+    vector<Point2f> intermediate_vectors = get_intermediate_points(sorted_ellipses[0], sorted_ellipses[1], good_ellipses);
+    intermediate_vectors  = get_intermediate_points(sorted_ellipses[0], intermediate_vectors);
+    sorted_ellipses_final.push_back(sorted_ellipses[0]);
+    cout<<intermediate_vectors.size()<<endl;
+    for (uint i=0; i<intermediate_vectors.size(); i++)
+    {
+        sorted_ellipses_final.push_back(intermediate_vectors[i]);
+    }
+    sorted_ellipses_final.push_back(sorted_ellipses[1]);
 
 
 
-    return sorted_ellipses;
+    return sorted_ellipses_final;
 }
 
 void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
@@ -457,7 +588,7 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
     rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
     imshow("RESULT", result);
-    waitKey(1);
+    waitKey(0);
 }
 
 
