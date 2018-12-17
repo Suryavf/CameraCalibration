@@ -50,7 +50,7 @@ void MainWindow::on_pushButton_clicked(){
     float timeLapse;
     int ellipseCount;
     double start_time;
-    video = cv::VideoCapture("/home/victor/Documentos/Imagenes/CameraCalibration/data/padron2.avi");
+    video = cv::VideoCapture(0);
 
     std::ofstream outfile;
     outfile.open("time.txt", std::ios_base::app);

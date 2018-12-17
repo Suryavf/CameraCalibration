@@ -439,7 +439,7 @@ vector<Point2f> ellipses_order20(vector<Point2f> good_ellipses)
         Point p = sorted_ellipses[2];
         sorted_ellipses[2] = sorted_ellipses[3];
         sorted_ellipses[3] = p;
-        cout<<"FORMA AMPLIA"<<endl;
+        //cout<<"FORMA AMPLIA"<<endl;
     }
     else
     {
@@ -448,7 +448,7 @@ vector<Point2f> ellipses_order20(vector<Point2f> good_ellipses)
         sorted_ellipses2.push_back(sorted_ellipses[0]);
         sorted_ellipses2.push_back(sorted_ellipses[2]);
         sorted_ellipses2.push_back(sorted_ellipses[1]);
-        cout<<"FORMA ALTA"<<endl;
+        //cout<<"FORMA ALTA"<<endl;
         sorted_ellipses = sorted_ellipses2;
 
     }
@@ -653,7 +653,7 @@ vector<Point2f> ellipses_order12(vector<Point2f> good_ellipses)
         Point p = sorted_ellipses[2];
         sorted_ellipses[2] = sorted_ellipses[3];
         sorted_ellipses[3] = p;
-        cout<<"FORMA AMPLIA"<<endl;
+        //cout<<"FORMA AMPLIA"<<endl;
     }
     else
     {
@@ -662,7 +662,7 @@ vector<Point2f> ellipses_order12(vector<Point2f> good_ellipses)
         sorted_ellipses2.push_back(sorted_ellipses[0]);
         sorted_ellipses2.push_back(sorted_ellipses[2]);
         sorted_ellipses2.push_back(sorted_ellipses[1]);
-        cout<<"FORMA ALTA"<<endl;
+        //cout<<"FORMA ALTA"<<endl;
         sorted_ellipses = sorted_ellipses2;
 
     }
@@ -876,8 +876,8 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     Point2f pt1 = Point2f(minRec.center.x - minRec.size.width/2, minRec.center.y - minRec.size.height/2);
     Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
     rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
-    imshow("RESULT", result);
-    waitKey(1);
+    //imshow("RESULT", result);
+    //waitKey(1);
 }
 
 

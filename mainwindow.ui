@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1242</width>
-    <height>665</height>
+    <width>1503</width>
+    <height>677</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>570</y>
+      <y>580</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -50,16 +50,6 @@
    <widget class="QGraphicsView" name="morphology">
     <property name="geometry">
      <rect>
-      <x>840</x>
-      <y>30</y>
-      <width>401</width>
-      <height>251</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QGraphicsView" name="ellipses">
-    <property name="geometry">
-     <rect>
       <x>0</x>
       <y>320</y>
       <width>401</width>
@@ -67,7 +57,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QGraphicsView" name="result">
+   <widget class="QGraphicsView" name="ellipses">
     <property name="geometry">
      <rect>
       <x>420</x>
@@ -77,11 +67,21 @@
      </rect>
     </property>
    </widget>
+   <widget class="QGraphicsView" name="result">
+    <property name="geometry">
+     <rect>
+      <x>840</x>
+      <y>30</y>
+      <width>661</width>
+      <height>541</height>
+     </rect>
+    </property>
+   </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>930</x>
-      <y>390</y>
+      <x>110</x>
+      <y>590</y>
       <width>111</width>
       <height>17</height>
      </rect>
@@ -99,8 +99,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>930</x>
-      <y>430</y>
+      <x>340</x>
+      <y>590</y>
       <width>111</width>
       <height>17</height>
      </rect>
@@ -118,8 +118,8 @@
    <widget class="QLabel" name="status">
     <property name="geometry">
      <rect>
-      <x>930</x>
-      <y>510</y>
+      <x>1050</x>
+      <y>580</y>
       <width>201</width>
       <height>17</height>
      </rect>
@@ -140,8 +140,8 @@
    <widget class="QLabel" name="timeFrame">
     <property name="geometry">
      <rect>
-      <x>1060</x>
-      <y>390</y>
+      <x>240</x>
+      <y>590</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -156,8 +156,8 @@
    <widget class="QLabel" name="ellipseCount">
     <property name="geometry">
      <rect>
-      <x>1060</x>
-      <y>430</y>
+      <x>470</x>
+      <y>590</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -218,8 +218,8 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>10</y>
+      <x>110</x>
+      <y>300</y>
       <width>191</width>
       <height>17</height>
      </rect>
@@ -241,7 +241,7 @@
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>550</x>
       <y>290</y>
       <width>141</width>
       <height>20</height>
@@ -264,8 +264,8 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>530</x>
-      <y>290</y>
+      <x>1080</x>
+      <y>10</y>
       <width>191</width>
       <height>17</height>
      </rect>
@@ -287,8 +287,8 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>930</x>
-      <y>470</y>
+      <x>570</x>
+      <y>590</y>
       <width>111</width>
       <height>17</height>
      </rect>
@@ -306,8 +306,8 @@
    <widget class="QLabel" name="accuracy">
     <property name="geometry">
      <rect>
-      <x>1060</x>
-      <y>470</y>
+      <x>700</x>
+      <y>590</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -325,7 +325,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1242</width>
+     <width>1503</width>
      <height>22</height>
     </rect>
    </property>
