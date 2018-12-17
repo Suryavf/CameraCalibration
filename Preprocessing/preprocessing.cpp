@@ -16,53 +16,43 @@ void distance(const cv::Point2f &p1, const cv::Point2f &p2, float &dist){
 void getCorners(const std::vector<cv::Point2f> &points,
                     uint &IL, uint &IR,
                     uint &SL, uint &SR,
-                    const cv::RotatedRect &ROI){
-    float aux;
+                    const uint &cols,
+                    const uint &rows){
+    float x_cols,y_rows,aux;
+    float x,y;
     float MAX_T = std::numeric_limits<T>::max();
     float IL_min = MAX_T, SL_min = MAX_T,
           IR_min = MAX_T, SR_min = MAX_T;
-
-    Point2f diff;
-    cv::Point2f cornerROI[4];
-    ROI.points( cornerROI );
     for( uint i = 0; i < points.size(); i++ ){
+        x = points[i].x; x_cols = cols - x;
+        y = points[i].y; y_rows = rows - y;
 
         // Inferior Left
-        diff = points[i] - cornerROI[1];
-        aux = diff.x*diff.x + diff.y*diff.y;
+        aux = x*x + y*y;
         if (IL_min>aux){ IL_min = aux;
                          IL     =   i;}
 
         // Superior Left
-        diff = points[i] - cornerROI[0];
-        aux = diff.x*diff.x + diff.y*diff.y;
+        aux = x*x + y_rows*y_rows;
         if (SL_min>aux){ SL_min = aux;
                          SL     =   i;}
 
         // Inferior Right
-        diff = points[i] - cornerROI[2];
-        aux = diff.x*diff.x + diff.y*diff.y;
+        aux = x_cols*x_cols + y*y;
         if (IR_min>aux){ IR_min = aux;
                          IR     =   i;}
 
         // Superior Right
-        diff = points[i] - cornerROI[3];
-        aux = diff.x*diff.x + diff.y*diff.y;
+        aux = x_cols*x_cols + y_rows*y_rows;
         if (SR_min>aux){ SR_min = aux;
                          SR     =   i;}
     }
 }
 
-bool conditionX(const pair<Point2f, int>& a, const pair<Point2f, int>& b){
-    return a.first.x < b.first.x;
-}
-
-bool conditionY(const pair<Point2f, int>& a, const pair<Point2f, int>& b){
-    return a.first.y < b.first.y;
-}
 
 
-void sortingPoints(vector<Point2f> &points, const cv::RotatedRect &ROI){
+
+void sortingPoints(vector<Point2f> &points, const uint &cols, const uint &rows){
 
     if(points.size()<2){
         // No hace nada
@@ -76,112 +66,56 @@ void sortingPoints(vector<Point2f> &points, const cv::RotatedRect &ROI){
                                                   });
     }
     else{
-    /*
-     *   IL ______________ IR
-     *     |  -->x        |
-     *     | |            |
-     *     | v y          |
-     *     |______________|
-     *   SL                SR
-     */
-        // Copy data
-
-        // Corners
         uint IL, IR, SL, SR;
-        getCorners(points,IL,IR,SL,SR,ROI);
-        vector<pair<Point2f, int>> pts;
+        getCorners(points,IL,IR,SL,SR,cols,rows);
 
-        // Traslate
-        for(size_t i=0;i<size_t(points.size());++i){
-            pts.push_back( make_pair(points[i] - points[IL],i) );
-        }
+        // Transform
+        cv::Point2f * inputQuad = new cv::Point2f[4];
+        cv::Point2f *outputQuad = new cv::Point2f[4];
 
+        inputQuad[0] = points[IL]; inputQuad[1] = points[IR];
+        inputQuad[3] = points[SL]; inputQuad[2] = points[SR];
 
-        // Calcular angulo
-        float h = sqrt( pts[IR].first.x*pts[IR].first.x + pts[IR].first.y*pts[IR].first.y );
-        float cos = pts[IR].first.x/h;
-        float sen = pts[IR].first.y/h;
+        inputQuad[0] = cv::Point2f(0,0); inputQuad[1] = cv::Point2f(1,0);
+        inputQuad[3] = cv::Point2f(0,1); inputQuad[2] = cv::Point2f(1,1);
+/*
+        cv::Mat lambda( 5 , 4, CV_32FC1 );
+        lambda = getPerspectiveTransform( inputQuad, outputQuad );
 
-        // Rotate
-        float x,y;
-        for(size_t i=0;i<size_t(pts.size());++i){
-            x = pts[i].first.x;  y = pts[i].first.y;
-            pts[i].first.x =   cos*x + sen*y;
-            pts[i].first.y = - sen*x + cos*y;
-        }
-
-        cout << "------------------------------------------" << endl;
-        for(size_t i=0;i<size_t(pts.size());++i)
-            cout << "(" << pts[i].first.x << "," << pts[i].first.y << ")\t";
-        cout << endl << endl;
-
-        std::sort(pts.begin(), pts.end(), conditionY);
-
-        for(size_t i=0;i<size_t(pts.size());++i)
-            cout << "(" << pts[i].first.x << "," << pts[i].first.y << ")\t";
-        cout << endl << endl;
-
-        vector<float> diff(pts.size()-1);
-        float minDiff = 9999999.99f, maxDiff= -1.0f;
-        float d;
-        for(size_t i=0;i<size_t(diff.size());++i){
-            d = abs(pts[i+1].first.y - pts[i].first.y);
-            if(minDiff>d) minDiff = d;
-            if(maxDiff<d) maxDiff = d;
-            diff[i] = d;
-        }
-        float umb = (maxDiff - minDiff)/1.5f;
-
-
-        cout << endl;
-        cout << endl;
-
-        size_t i = 0, org = 0;
-        while( i<size_t(diff.size()) ){
-            org = i;
-            while( diff[i]<umb && i<size_t(diff.size()) ){
-                ++i;
-            }
-
-            cout << "(" << org << "," << i << ")\t";
-            auto start = pts.begin() + org;
-            auto stop  = pts.begin() + ++i;
-            std::sort(start, stop , conditionX);
-            //++i;
-
-
-        }
-
-
-
-        cout << endl;
-        cout << endl;
-
-        std::sort(pts.begin(), pts.end(), conditionX);
-
-        for(size_t i=0;i<size_t(pts.size());++i){
-            cout << "(" << pts[i].first.x << "," << pts[i].first.y << ")\t";
-        }
-        cout << endl;
-        cout << "------------------------------------------" << endl;
-        cout << endl;
-
-
-        vector<Point2f> cpPoints(points);
-        for(size_t i=0;i<size_t(pts.size());++i){
-            points[i] = cpPoints[ size_t(pts[i].second) ] ;
-        }
-
-
-        // ---------------------------
-        Mat b = Mat::zeros( Size(300,300), CV_8UC3 );
-        for(size_t i=0;i<size_t(pts.size());++i)
-            circle(b, pts[i].first + Point2f(100,100), 2, Scalar(0,255,0), -1, 8, 0);
-        // ---------------------------
-        imshow( "Luego de rotar", b );                   // Show our image inside it.
-        waitKey(1);
+        cv::Mat dst;
+        cv::warpPerspective( cv::Mat( points ), dst, lambda, dst.size());
+*/
 
     }
+
+
+
+    /*
+    vector<Point2f> pointTras( point.size() );
+
+    float cosAngle = float(cos(double(angle)*M_PI/180.0));
+    float sinAngle = float(sin(double(angle)*M_PI/180.0));
+
+    float min_x = 999999999.99f, max_x = -999999999.99f;
+    float min_y = 999999999.99f, max_y = -999999999.99f;
+    Point2f p;
+
+    // Traslate and rotation
+    for(size_t i=0; i<point.size(); ++i){
+        p = point[i] - origin;
+
+        p.x =   p.x*cosAngle + p.x*sinAngle;
+        p.y = - p.y*sinAngle + p.y*cosAngle;
+
+        if(min_x>p.x) min_x = p.x; if(max_x<p.x) max_x = p.x;
+        if(min_y>p.y) min_y = p.y; if(max_y<p.y) max_y = p.y;
+
+        // Update
+        pointTras[i] = p;
+    }
+    */
+
+
 }
 
 
@@ -261,6 +195,59 @@ void ellipsePurge(Mat &morphology, Mat &ellipses,
     }
 }
 
+
+vector<Point2f> ellipses_order(vector<Point2f> good_ellipses)
+{
+    vector<Point2f> convex_hull;
+    vector<Point2f> sorted_ellipses;
+
+
+    convexHull(good_ellipses, convex_hull, true);
+    convex_hull.push_back(convex_hull[0]);
+    convex_hull.push_back(convex_hull[1]);
+
+    float x_s = convex_hull[0].x;
+    float y_s = convex_hull[0].y;
+    float m = (convex_hull[1].y - y_s)/(convex_hull[1].x - x_s + 0.0001);
+    float holgura = 5;
+    float y_eq = 0;
+    float x_eq = 0;
+
+    for(uint i=1; i<convex_hull.size(); i++)
+    {
+        if(abs(convex_hull[i].x - x_s) > abs(convex_hull[i].y - y_s))
+        {
+            y_eq = m*(convex_hull[i].x - x_s) + y_s;
+
+            if(abs(y_eq - convex_hull[i].y) >= holgura)
+            {
+                sorted_ellipses.push_back(convex_hull[i-1]);
+                x_s = convex_hull[i-1].x;
+                y_s = convex_hull[i-1].y;
+                m = (convex_hull[i].y - y_s)/(convex_hull[i].x - x_s + 0.0001);
+            }
+
+        }
+        else
+        {
+            x_eq = (convex_hull[i].y - y_s)/m + x_s;
+
+            if(abs(x_eq - convex_hull[i].x) >= holgura)
+            {
+                sorted_ellipses.push_back(convex_hull[i-1]);
+                x_s = convex_hull[i-1].x;
+                y_s = convex_hull[i-1].y;
+                m = (convex_hull[i].y - y_s)/(convex_hull[i].x - x_s + 0.0001);
+            }
+
+        }
+
+
+    }
+
+    return sorted_ellipses;
+}
+
 void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
                    cv::Mat &morphology, cv::Mat  &ellipses ,
                    cv::Mat &result, cv::RotatedRect &minRec,
@@ -269,6 +256,9 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     int width  = frame.cols;
     int height = frame.rows;
     vector<Vec4i> hierarchy;
+
+
+
 
 /*
     Binarized Image
@@ -326,20 +316,19 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
  */
     if(good_ellipses.size() > 16){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width  = minRec.size.width  + 10;
-        minRec.size.height = minRec.size.height + 10;
+        minRec.size.width = minRec.size.width + 100;
+        minRec.size.height = minRec.size.height + 100;
     }
     else if(good_ellipses.size() > 10){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width  = minRec.size.width  + 50;
-        minRec.size.height = minRec.size.height + 50;
-    }else{
-        minRec = cv::RotatedRect(cv::Point(frame.rows,         0),
+        minRec.size.width = minRec.size.width + 200;
+        minRec.size.height = minRec.size.height + 200;
+    }else
+    {
+        minRec = cv::RotatedRect(cv::Point(frame.cols,         0),
                                  cv::Point(         0,         0),
-                                 cv::Point(         0,frame.cols));
+                                 cv::Point(         0,frame.rows));
     }
-
-    sortingPoints(good_ellipses,minRec);
 
 /*
     Grid patron;
@@ -361,17 +350,30 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     Result
     ------
  */
+    vector<Point2f> sorted_ellipses = good_ellipses;
+
+    if(good_ellipses.size() == 20)
+        sorted_ellipses = ellipses_order(good_ellipses);
+
+
     frame.copyTo(result);
-    for (size_t i = 0; i < good_ellipses.size(); ++i){
-        circle(result, good_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
+    for (size_t i = 0; i < sorted_ellipses.size(); ++i){
+        circle(result, sorted_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
         putText(result,      std::to_string(i),
-                              good_ellipses[i], // Coordinates
+                              sorted_ellipses[i], // Coordinates
                        cv::FONT_HERSHEY_DUPLEX, // Font
-                                           0.6, // Scale. 2.0 = 2x bigger
+                                           0.9, // Scale. 2.0 = 2x bigger
                            cv::Scalar(0,0,255), // BGR Color
                                             2); // Line Thickness (Optional)
     }
 
     // Save ellipse count
     ellipseCount = int(good_ellipses.size());
+    Point2f pt1 = Point2f(minRec.center.x - minRec.size.width/2, minRec.center.y - minRec.size.height/2);
+    Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
+    rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
+    //imshow("RESULT", result);
+    //waitKey(1);
 }
+
+
