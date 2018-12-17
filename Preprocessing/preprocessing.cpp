@@ -53,7 +53,13 @@ void getCorners(const std::vector<cv::Point2f> &points,
     }
 }
 
+bool conditionX(const pair<Point2f, int>& a, const pair<Point2f, int>& b){
+    return a.first.x < b.first.x;
+}
 
+bool conditionY(const pair<Point2f, int>& a, const pair<Point2f, int>& b){
+    return a.first.y < b.first.y;
+}
 
 
 void sortingPoints(vector<Point2f> &points, const cv::RotatedRect &ROI){
@@ -79,111 +85,103 @@ void sortingPoints(vector<Point2f> &points, const cv::RotatedRect &ROI){
      *   SL                SR
      */
         // Copy data
-        vector<Point2f> cpPts(points.size());
-        vector<  int  > index(points.size());
-        for(size_t i=0;i<size_t(index.size());++i)
-            index[i] = int(i);
-
-        //cout << "Estoy aqui!! (Copy data)" << endl;
 
         // Corners
         uint IL, IR, SL, SR;
         getCorners(points,IL,IR,SL,SR,ROI);
-
-        //cout << "Estoy aqui!! (Corners)" << endl;
+        vector<pair<Point2f, int>> pts;
 
         // Traslate
-        for(size_t i=0;i<size_t(index.size());++i)
-            cpPts[i] = points[i] - points[IL];
-
-        // ---------------------------
-        Mat a = Mat::zeros( Size(300,300), CV_8UC3 );
-        for(size_t i=0;i<size_t(index.size());++i)
-            circle(a, cpPts[i] + Point2f(100,100), 2, Scalar(0,255,0), -1, 8, 0);
-        // ---------------------------
-
-        imshow( "Antes de rotar", a );                   // Show our image inside it.
-        waitKey(1);
+        for(size_t i=0;i<size_t(points.size());++i){
+            pts.push_back( make_pair(points[i] - points[IL],i) );
+        }
 
 
         // Calcular angulo
-        float h = sqrt( cpPts[IR].x*cpPts[IR].x + cpPts[IR].y*cpPts[IR].y );
-        float cos = cpPts[IR].x/h;
-        float sen = cpPts[IR].y/h;
-
+        float h = sqrt( pts[IR].first.x*pts[IR].first.x + pts[IR].first.y*pts[IR].first.y );
+        float cos = pts[IR].first.x/h;
+        float sen = pts[IR].first.y/h;
 
         // Rotate
         float x,y;
-        for(size_t i=0;i<size_t(index.size());++i){
-            x = cpPts[i].x;  y = cpPts[i].y;
-            cpPts[i].x =   cos*x + sen*y;
-            cpPts[i].y = - sen*x + cos*y;
-
-            cout << "(" << cpPts[i].x << "," << cpPts[i].y << ")\t";
+        for(size_t i=0;i<size_t(pts.size());++i){
+            x = pts[i].first.x;  y = pts[i].first.y;
+            pts[i].first.x =   cos*x + sen*y;
+            pts[i].first.y = - sen*x + cos*y;
         }
+
+        cout << "------------------------------------------" << endl;
+        for(size_t i=0;i<size_t(pts.size());++i)
+            cout << "(" << pts[i].first.x << "," << pts[i].first.y << ")\t";
+        cout << endl << endl;
+
+        std::sort(pts.begin(), pts.end(), conditionY);
+
+        for(size_t i=0;i<size_t(pts.size());++i)
+            cout << "(" << pts[i].first.x << "," << pts[i].first.y << ")\t";
+        cout << endl << endl;
+
+        vector<float> diff(pts.size()-1);
+        float minDiff = 9999999.99f, maxDiff= -1.0f;
+        float d;
+        for(size_t i=0;i<size_t(diff.size());++i){
+            d = abs(pts[i+1].first.y - pts[i].first.y);
+            if(minDiff>d) minDiff = d;
+            if(maxDiff<d) maxDiff = d;
+            diff[i] = d;
+        }
+        float umb = (maxDiff - minDiff)/1.5f;
+
+
+        cout << endl;
+        cout << endl;
+
+        size_t i = 0, org = 0;
+        while( i<size_t(diff.size()) ){
+            org = i;
+            while( diff[i]<umb && i<size_t(diff.size()) ){
+                ++i;
+            }
+
+            cout << "(" << org << "," << i << ")\t";
+            auto start = pts.begin() + org;
+            auto stop  = pts.begin() + ++i;
+            std::sort(start, stop , conditionX);
+            //++i;
+
+
+        }
+
+
+
+        cout << endl;
+        cout << endl;
+
+        std::sort(pts.begin(), pts.end(), conditionX);
+
+        for(size_t i=0;i<size_t(pts.size());++i){
+            cout << "(" << pts[i].first.x << "," << pts[i].first.y << ")\t";
+        }
+        cout << endl;
+        cout << "------------------------------------------" << endl;
+        cout << endl;
+
+
+        vector<Point2f> cpPoints(points);
+        for(size_t i=0;i<size_t(pts.size());++i){
+            points[i] = cpPoints[ size_t(pts[i].second) ] ;
+        }
+
 
         // ---------------------------
         Mat b = Mat::zeros( Size(300,300), CV_8UC3 );
-        for(size_t i=0;i<size_t(index.size());++i)
-            circle(b, cpPts[i] + Point2f(100,100), 2, Scalar(0,255,0), -1, 8, 0);
+        for(size_t i=0;i<size_t(pts.size());++i)
+            circle(b, pts[i].first + Point2f(100,100), 2, Scalar(0,255,0), -1, 8, 0);
         // ---------------------------
         imshow( "Luego de rotar", b );                   // Show our image inside it.
         waitKey(1);
 
-
-        //std::cin.get();
-
-
-
-/*
-        // Transform
-        cv::Point2f * inputQuad = new cv::Point2f[4];
-        cv::Point2f *outputQuad = new cv::Point2f[4];
-
-        inputQuad[0] = points[IL]; inputQuad[1] = points[IR];
-        inputQuad[3] = points[SL]; inputQuad[2] = points[SR];
-
-        inputQuad[0] = cv::Point2f(0,0); inputQuad[1] = cv::Point2f(1,0);
-        inputQuad[3] = cv::Point2f(0,1); inputQuad[2] = cv::Point2f(1,1);
- */
-/*
-        cv::Mat lambda( 5 , 4, CV_32FC1 );
-        lambda = getPerspectiveTransform( inputQuad, outputQuad );
-
-        cv::Mat dst;
-        cv::warpPerspective( cv::Mat( points ), dst, lambda, dst.size());
- */
-
     }
-
-
-
-    /*
-    vector<Point2f> pointTras( point.size() );
-
-    float cosAngle = float(cos(double(angle)*M_PI/180.0));
-    float sinAngle = float(sin(double(angle)*M_PI/180.0));
-
-    float min_x = 999999999.99f, max_x = -999999999.99f;
-    float min_y = 999999999.99f, max_y = -999999999.99f;
-    Point2f p;
-
-    // Traslate and rotation
-    for(size_t i=0; i<point.size(); ++i){
-        p = point[i] - origin;
-
-        p.x =   p.x*cosAngle + p.x*sinAngle;
-        p.y = - p.y*sinAngle + p.y*cosAngle;
-
-        if(min_x>p.x) min_x = p.x; if(max_x<p.x) max_x = p.x;
-        if(min_y>p.y) min_y = p.y; if(max_y<p.y) max_y = p.y;
-
-        // Update
-        pointTras[i] = p;
-    }
-    */
-
-
 }
 
 
