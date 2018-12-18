@@ -4,41 +4,30 @@ Computer vision techniques are widely studied in order to develop real time appl
 
 ## Dependencies
 
-Use [OpenCV](https://opencv.org/) 3.4
+Use [OpenCV](https://opencv.org/) 3.4 and [QT](https://www.qt.io/) 5.11
 
 ## Compilation and execution
 
-```bash
-make
-./out
-```
+Compile CameraCalibration.pro in Qt 5.11.
 
 ## Usage
 
-Open CameraCalibration/main.cpp
+Execute program.
 
-```cpp
-int main(){
 
-	// Read image
-	string name_video = "Preprocessing/PadronAnillos_01.avi";
-	find_rings(name_video); // Ellipse Method
+## Test
 
-    waitKey(0); 
-    return 0;
-}
-```
+Grid 3x4 detection
 
-or
+[![Watch the video](https://i.imgur.com/ztK9luV.png)](https://youtu.be/w7SZ-9yJCts)
 
-```cpp
-int main(){
 
-	// Read image
-	string name_video = "Preprocessing/PadronAnillos_01.avi";
-	hough_transform_from_video(name_video); // Hough method
+Grid 4x5 detection
 
-    waitKey(0); 
-    return 0;
-}
-```
+[![Watch the video](https://i.imgur.com/BxgIfVo.png)](https://youtu.be/A9ZRA_AWvHI)
+
+
+Grid 4x5 online detection
+
+[![Watch the video](https://i.imgur.com/BxgIfVo.png)](https://youtu.be/A9ZRA_AWvHI)
+
