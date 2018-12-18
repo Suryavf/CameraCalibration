@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1503</width>
-    <height>677</height>
+    <height>625</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>580</y>
+      <y>570</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -80,8 +80,8 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>110</x>
-      <y>590</y>
+      <x>100</x>
+      <y>580</y>
       <width>111</width>
       <height>17</height>
      </rect>
@@ -99,8 +99,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>590</y>
+      <x>350</x>
+      <y>580</y>
       <width>111</width>
       <height>17</height>
      </rect>
@@ -118,7 +118,7 @@
    <widget class="QLabel" name="status">
     <property name="geometry">
      <rect>
-      <x>1050</x>
+      <x>1070</x>
       <y>580</y>
       <width>201</width>
       <height>17</height>
@@ -140,8 +140,8 @@
    <widget class="QLabel" name="timeFrame">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>590</y>
+      <x>210</x>
+      <y>580</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -156,9 +156,9 @@
    <widget class="QLabel" name="ellipseCount">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>590</y>
-      <width>71</width>
+      <x>460</x>
+      <y>580</y>
+      <width>51</width>
       <height>20</height>
      </rect>
     </property>
@@ -264,7 +264,7 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>1080</x>
+      <x>1070</x>
       <y>10</y>
       <width>191</width>
       <height>17</height>
@@ -287,9 +287,9 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>590</y>
-      <width>111</width>
+      <x>560</x>
+      <y>580</y>
+      <width>81</width>
       <height>17</height>
      </rect>
     </property>
@@ -306,8 +306,8 @@
    <widget class="QLabel" name="accuracy">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>590</y>
+      <x>630</x>
+      <y>580</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -329,16 +329,32 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionGrid3x4"/>
+    <addaction name="actionGrid4x5"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionGrid3x4">
+   <property name="text">
+    <string>Grid 3x4</string>
+   </property>
+  </action>
+  <action name="actionGrid4x5">
+   <property name="text">
+    <string>Grid 4x5</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

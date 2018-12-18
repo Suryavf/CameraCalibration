@@ -4,9 +4,8 @@
 
 #include <fstream>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow){
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
+                                          ui(new Ui::MainWindow){
     ui->setupUi(this);
 
     // Create Original scene
@@ -29,7 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->result->setScene(new QGraphicsScene(this));
     ui->result->scene()->addItem(&PixResult);
 
+    pathTo = "/home/victor/Documentos/Imagenes/CameraCalibration/data/padron1.avi";
 }
+
 
 MainWindow::~MainWindow(){
     delete ui;
@@ -50,10 +51,10 @@ void MainWindow::on_pushButton_clicked(){
     float timeLapse;
     int ellipseCount;
     double start_time;
-    video = cv::VideoCapture(0);
+    video = cv::VideoCapture(pathTo.toUtf8().constData());
 
     std::ofstream outfile;
-    outfile.open("time.txt", std::ios_base::app);
+    outfile.open("/home/victor/Documentos/Imagenes/CameraCalibration/data/time20.txt", std::ios_base::app);
 
     if (!video.isOpened()){
         printf("Failed to open the video");
@@ -66,6 +67,7 @@ void MainWindow::on_pushButton_clicked(){
     minRect = cv::RotatedRect(cv::Point(frame.rows,         0),
                               cv::Point(         0,         0),
                               cv::Point(         0,frame.cols));
+    n_centers = 0;
 
     int countTrue = 0, countFrames = 0;
     while(video.isOpened()){
@@ -79,10 +81,11 @@ void MainWindow::on_pushButton_clicked(){
             gridDetection(frame,binarized,morphology,ellipses,result,minRect,ellipseCount);
             timeLapse = float( (omp_get_wtime() - start_time)*1000 );
 
-            outfile << std::to_string(timeLapse) + "\n";
+            if(n_centers == 0) n_centers = ellipseCount;
+            outfile << std::to_string(timeLapse) + "\t";
 
             ++countFrames;
-            if(ellipseCount == 20) ++countTrue;
+            if(ellipseCount == n_centers) ++countTrue;
 
             //
             // Drawing
@@ -124,10 +127,12 @@ void MainWindow::on_pushButton_clicked(){
             ui->timeFrame->setText(QString::number( int(timeLapse)) + " ms");
             ui->ellipseCount->setText(QString::number(ellipseCount));
 
-            if(ellipseCount == 20){
+            outfile << std::to_string(ellipseCount) + "\n";
+
+            if(ellipseCount == n_centers){
                 ui->status->setText("Correct detection!");
                 ui->status->setStyleSheet("QLabel { color : black; }");
-            }else if( ellipseCount < 20 ){
+            }else if( ellipseCount < n_centers ){
                 ui->status->setText("Loss ellipses");
                  ui->status->setStyleSheet("QLabel { color : red; }");
             }else{
@@ -143,6 +148,20 @@ void MainWindow::on_pushButton_clicked(){
 
         qApp->processEvents();
     }
+
     outfile.close();
 
+}
+
+void MainWindow::on_actionOpen_triggered(){
+    pathTo = QFileDialog::getOpenFileName(this, tr("Open video"), "",
+                                                tr("Video AVI (*.avi);;All Files (*)"));
+}
+
+void MainWindow::on_actionGrid3x4_triggered(){
+    pathTo = "/home/victor/Documentos/Imagenes/CameraCalibration/data/padron1.avi";
+}
+
+void MainWindow::on_actionGrid4x5_triggered(){
+    pathTo = "/home/victor/Documentos/Imagenes/CameraCalibration/data/padron2.avi";
 }

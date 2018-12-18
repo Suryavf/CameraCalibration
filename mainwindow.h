@@ -12,6 +12,10 @@
 #include <QLabel>
 #include <QElapsedTimer>
 
+#include <QtCore>
+#include <QtGui>
+#include <QFileDialog>
+
 #include "opencv2/opencv.hpp"
 #include <omp.h>
 
@@ -32,6 +36,11 @@ protected:
 
 private slots:
     void on_pushButton_clicked();
+    void on_actionOpen_triggered();
+
+    void on_actionGrid3x4_triggered();
+
+    void on_actionGrid4x5_triggered();
 
 private:
     Ui::MainWindow *ui;
@@ -46,6 +55,8 @@ private:
     // CV::Video
     cv::VideoCapture video;
 
+    QString pathTo;
+    int n_centers;
 };
 
 #endif // MAINWINDOW_H

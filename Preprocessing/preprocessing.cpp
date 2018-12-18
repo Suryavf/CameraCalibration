@@ -1,6 +1,81 @@
 #include "preprocessing.h"
 
 
+void thresholdIntegral(cv::Mat &inputMat, cv::Mat &outputMat){
+    // accept only char type matrices
+    CV_Assert(!inputMat.empty());
+    CV_Assert(inputMat.depth() == CV_8U);
+    CV_Assert(inputMat.channels() == 1);
+    CV_Assert(!outputMat.empty());
+    CV_Assert(outputMat.depth() == CV_8U);
+    CV_Assert(outputMat.channels() == 1);
+
+    // rows -> height -> y
+    int nRows = inputMat.rows;
+    // cols -> width -> x
+    int nCols = inputMat.cols;
+
+    // create the integral image
+    cv::Mat sumMat;
+    cv::integral(inputMat, sumMat);
+
+    CV_Assert(sumMat.depth() == CV_32S);
+    CV_Assert(sizeof(int) == 4);
+
+    int S = MAX(nRows, nCols)/32;
+    double T = 0.15;
+
+    // perform thresholding
+    int s2 = S/2;
+    int x1, y1, x2, y2, count, sum;
+
+    // CV_Assert(sizeof(int) == 4);
+    int *p_y1, *p_y2;
+    uchar *p_inputMat, *p_outputMat;
+
+    for( int i = 0; i < nRows; ++i){
+        y1 = i-s2;
+        y2 = i+s2;
+
+        if (y1 < 0){
+            y1 = 0;
+        }
+        if (y2 >= nRows) {
+            y2 = nRows-1;
+        }
+
+        p_y1 = sumMat.ptr<int>(y1);
+        p_y2 = sumMat.ptr<int>(y2);
+        p_inputMat = inputMat.ptr<uchar>(i);
+        p_outputMat = outputMat.ptr<uchar>(i);
+
+        for ( int j = 0; j < nCols; ++j){
+            // set the SxS region
+            x1 = j-s2;
+            x2 = j+s2;
+
+            if (x1 < 0) {
+                x1 = 0;
+            }
+            if (x2 >= nCols) {
+                x2 = nCols-1;
+            }
+
+            count = (x2-x1)*(y2-y1);
+
+            // I(x,y)=s(x2,y2)-s(x1,y2)-s(x2,y1)+s(x1,x1)
+            sum = p_y2[x2] - p_y1[x2] - p_y2[x1] + p_y1[x1];
+
+            if ((int)(p_inputMat[j] * count) < (int)(sum*(1.0-T)))
+                p_outputMat[j] = 255;
+            else
+                p_outputMat[j] = 0;
+        }
+    }
+}
+
+
+
 void distance(const cv::Point2f &p1, const cv::Point2f &p2, float &dist){
     float x = p1.x - p2.x;
     float y = p1.y - p2.y;
@@ -184,8 +259,8 @@ void ellipsePurge(Mat &morphology, Mat &ellipses,
 
             if(counter_verify > 1){
                 center = Point2f(sumx/counter_verify, sumy/counter_verify);
-                circle(ellipses, center, 2, Scalar(0,255,0), -1, 8, 0);
-                ellipse( ellipses, elipses[i], Scalar(0,0,255), 2, 8 );
+                circle(ellipses, center, 2,cv::Scalar(35,255,75), -1, 8, 0);
+                ellipse( ellipses, elipses[i], Scalar(253,35,255), 2, 8 );
 
                 // Add to ellipse list
                 centers.push_back(center);
@@ -768,6 +843,8 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     cv::Mat gray;
     cvtColor(frame, gray, CV_BGR2GRAY);
     GaussianBlur(gray, gray, Size(9, 9), 2, 2);
+    //binarized = cv::Mat(gray);
+    //thresholdIntegral(gray, binarized);
     adaptiveThreshold(gray, binarized, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
 
 /*
@@ -862,20 +939,20 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
 
     frame.copyTo(result);
     for (size_t i = 0; i < sorted_ellipses.size(); ++i){
-        circle(result, sorted_ellipses[i], 2, Scalar(0,255,0), -1, 8, 0); //-1 full circle
-        putText(result,      std::to_string(i),
+        circle(result, sorted_ellipses[i], 2, Scalar(253,35,255), -1, 8, 0); //-1 full circle
+        putText(result,      std::to_string(i+1),
                               sorted_ellipses[i], // Coordinates
                        cv::FONT_HERSHEY_DUPLEX, // Font
-                                           0.9, // Scale. 2.0 = 2x bigger
-                           cv::Scalar(0,0,255), // BGR Color
-                                            2); // Line Thickness (Optional)
+                                          0.65, // Scale. 2.0 = 2x bigger
+                         cv::Scalar(35,255,75), // BGR Color
+                                            1); // Line Thickness (Optional)
     }
 
     // Save ellipse count
     ellipseCount = int(good_ellipses.size());
-    Point2f pt1 = Point2f(minRec.center.x - minRec.size.width/2, minRec.center.y - minRec.size.height/2);
-    Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
-    rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
+    //Point2f pt1 = Point2f(minRec.center.x - minRec.size.width/2, minRec.center.y - minRec.size.height/2);
+    //Point2f pt2 = Point2f(minRec.center.x + minRec.size.width/2, minRec.center.y + minRec.size.height/2);
+    //rectangle(result, pt1, pt2, Scalar(255, 0, 0), 1, 8, 0);
     //imshow("RESULT", result);
     //waitKey(1);
 }
