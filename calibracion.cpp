@@ -1,6 +1,3 @@
-
-// g++ -std=c++11 calibracion.cpp -o main `pkg-config --cflags --libs opencv`&& ./main
-
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -15,6 +12,7 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 
+#include <omp.h>
 using namespace cv;
 using namespace std;
 
@@ -320,7 +318,8 @@ int main(int argc, char* argv[])
                               cv::Point(         0,         0),
                               cv::Point(         0,view.cols));
 
-
+    float timeLapse;
+    double start_time;
 
 
 
@@ -377,8 +376,10 @@ int main(int argc, char* argv[])
             chessBoardFlags |= CALIB_CB_FAST_CHECK;
         }
 
+        start_time = omp_get_wtime();
         switch( s.calibrationPattern ) // Find feature points on the input format
         {
+            
         case Settings::CHESSBOARD:
             found = findChessboardCorners( view, s.boardSize, pointBuf, chessBoardFlags);
             break;
@@ -395,7 +396,9 @@ int main(int argc, char* argv[])
         default:
             found = false;
             break;
+            
         }
+        timeLapse = float( (omp_get_wtime() - start_time)*1000 );
         //! [find_pattern]
         //! [pattern_found]
         if ( found)                // If done with success,
@@ -420,6 +423,8 @@ int main(int argc, char* argv[])
                 // Draw the corners.
                 drawChessboardCorners( view, s.boardSize, Mat(pointBuf), found );
 
+                
+
         }
         //! [pattern_found]
         //----------------------------- Output Text ------------------------------------------------
@@ -439,6 +444,7 @@ int main(int argc, char* argv[])
         }
 
         putText( view, msg, textOrigin, 1, 1, mode == CALIBRATED ?  GREEN : RED);
+        putText(view, "Time:" + to_string(timeLapse), Point2f(50,50), FONT_HERSHEY_PLAIN, 2, Scalar(255, 0, 0), 1, 8, false );
 
         if( blinkOutput )
             bitwise_not(view, view);
