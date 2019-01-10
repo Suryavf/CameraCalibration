@@ -1,3 +1,6 @@
+
+// g++ -std=c++11 calibracion.cpp -o main `pkg-config --cflags --libs opencv`&& ./main
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -552,6 +555,7 @@ static void calcBoardCornerPositions(Size boardSize, float squareSize, vector<Po
     switch(patternType)
     {
     case Settings::CHESSBOARD:
+    case Settings::RINGS_GRID:
     case Settings::CIRCLES_GRID:
         for( int i = 0; i < boardSize.height; ++i )
             for( int j = 0; j < boardSize.width; ++j )
@@ -1549,7 +1553,10 @@ bool findRingsGrid( Mat view, Mat binarized, Mat morphology, Mat ellipses, Mat r
     for(int i=0; i<pointBuf.size(); i++)
     {
         if(pointBuf[i].x == 0 && pointBuf[i].y == 0)
+        {
+            pointBuf.clear();
             return false;
+        }
     }
     
     if(pointBuf.size() == 20)
