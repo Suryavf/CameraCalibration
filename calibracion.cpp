@@ -235,7 +235,7 @@ private:
 
 };
 
-bool findRingsGrid( Mat view, Mat binarized, Mat morphology, Mat ellipses, Mat result, RotatedRect minRect, Size boardSize, vector<Point2f> &pointBuf);
+bool findRingsGrid( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, Mat &result, RotatedRect &minRect, Size &boardSize, vector<Point2f> &pointBuf);
 
 static inline void read(const FileNode& node, Settings& x, const Settings& default_value = Settings())
 {
@@ -1487,13 +1487,13 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
  */
    if(good_ellipses.size() > 16){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width  = minRec.size.width *1.15f;
-        minRec.size.height = minRec.size.height*1.15f;
+        minRec.size.width  = minRec.size.width +100;
+        minRec.size.height = minRec.size.height+100;
     }
     else if(good_ellipses.size() > 10){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width  = minRec.size.width *1.5f;
-        minRec.size.height = minRec.size.height*1.5f;
+        minRec.size.width  = minRec.size.width +200;
+        minRec.size.height = minRec.size.height+200;
     }else
     {
         minRec = cv::RotatedRect(cv::Point(frame.cols,         0),
@@ -1511,8 +1511,8 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     if(good_ellipses.size() == 20)
         sorted_ellipses = ellipses_order20(good_ellipses);
 
-    //if(good_ellipses.size() == 12)
-        //sorted_ellipses = ellipses_order12(good_ellipses);
+    if(good_ellipses.size() == 12)
+        sorted_ellipses = ellipses_order12(good_ellipses);
 
 
     frame.copyTo(result);
@@ -1551,7 +1551,7 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
 
 
 // RINGS DETECTION
-bool findRingsGrid( Mat view, Mat binarized, Mat morphology, Mat ellipses, Mat result, RotatedRect minRect, Size boardSize, vector<Point2f> &pointBuf)
+bool findRingsGrid( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, Mat &result, RotatedRect &minRect, Size &boardSize, vector<Point2f> &pointBuf)
 {
     int ellipseCount = 0;
     gridDetection(view, binarized, morphology, ellipses, result, minRect, ellipseCount, pointBuf);
@@ -1565,7 +1565,7 @@ bool findRingsGrid( Mat view, Mat binarized, Mat morphology, Mat ellipses, Mat r
         }
     }
     
-    if(pointBuf.size() == 20)
+    if(pointBuf.size() == 12 || pointBuf.size() == 20)
         return true;
 
     return false;
