@@ -6,7 +6,17 @@ Computer vision techniques are widely studied in order to develop real time appl
 
 Use [OpenCV](https://opencv.org/) 3.4 and [QT](https://www.qt.io/) 5.11
 
-## Compilation and execution
+## Compilation and execution all functions (circle, chessboard, rings)
+
+Compile and execute:
+
+```console
+g++ -std=c++11 calibracion.cpp -o main `pkg-config --cflags --libs opencv`&& ./main
+```
+
+Change the pattern and settings in the file: default.xml
+
+## Compilation and execution basic program
 
 Compile CameraCalibration.pro in Qt 5.11.
 
