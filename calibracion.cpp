@@ -279,13 +279,17 @@ int main(int argc, char* argv[]){
     clock_t prevTimestamp = 0;
     const Scalar RED(0,0,255), GREEN(0,255,0);
     const char ESC_KEY = 27;
+    bool press_key_capture = false;
+
 
     // =============================== Variables in order to get the rings detection ========================================
 
     cv::Mat frame,binarized,morphology,ellipses,result;
     cv::RotatedRect minRect;
 
+
     Mat view;
+    
     view = s.nextImage();
     minRect = cv::RotatedRect(cv::Point(view.rows,         0),
                               cv::Point(         0,         0),
@@ -294,7 +298,7 @@ int main(int argc, char* argv[]){
     float timeLapse;
     double start_time;
 
-
+     Mat cloud_points(view.rows, view.cols, CV_8UC3, Scalar(0,0,0));
 
     // =======================================================================================================================
 
@@ -361,7 +365,13 @@ int main(int argc, char* argv[]){
         }
         //! [find_pattern]
         //! [pattern_found]
-        if ( found)                // If done with success,
+
+        // ============================================ FRAMES ====================================
+        String filename = "/home/laura/Escritorio/Imágenes/Calibration1/CameraCalibration/Frames_Rings/frame";
+        String filename2 = "/home/laura/Escritorio/Imágenes/Calibration1/CameraCalibration/Frames_Rings_Color/frame";
+        bool color_frame = false;
+
+        if ( found )                // If done with success,
         {
               // improve the found corners' coordinate accuracy for chessboard
                 if( s.calibrationPattern == Settings::CHESSBOARD)
@@ -373,15 +383,30 @@ int main(int argc, char* argv[]){
                 }
 
                 if( mode == CAPTURING &&  // For camera only take new samples after delay time
-                    (!s.inputCapture.isOpened() || clock() - prevTimestamp > s.delay*1e-3*CLOCKS_PER_SEC) )
+                    (!s.inputCapture.isOpened() || clock() - prevTimestamp > s.delay*1e-3*CLOCKS_PER_SEC) && press_key_capture )
                 {
                     imagePoints.push_back(pointBuf);
                     prevTimestamp = clock();
                     blinkOutput = s.inputCapture.isOpened();
+                    imwrite(filename + to_string(imagePoints.size()) + ".png", view);
+                    color_frame = true;
+
                 }
 
                 // Draw the corners.
                 drawChessboardCorners( view, s.boardSize, Mat(pointBuf), found );
+
+                if( color_frame && press_key_capture)
+                {
+                    imwrite(filename2 + to_string(imagePoints.size()) + ".png", view);
+                    press_key_capture = false;
+
+                    for (int i = 0; i < pointBuf.size(); ++i)
+                    {
+                        circle(cloud_points, pointBuf[i], 2, Scalar(221, 255, 51), -1, 8, 0);
+                    }
+
+                }
         }
         //! [pattern_found]
         //----------------------------- Output Text ------------------------------------------------
@@ -414,11 +439,13 @@ int main(int argc, char* argv[]){
               cv::fisheye::undistortImage(temp, view, cameraMatrix, distCoeffs);
             else
               undistort(temp, view, cameraMatrix, distCoeffs);
+
         }
         //! [output_undistorted]
         //------------------------------ Show image and check for input commands -------------------
         //! [await_input]
         imshow("Image View", view);
+        imshow("Image cloud points", cloud_points);
 
         
         char key = (char)waitKey(s.inputCapture.isOpened() ? 50 : s.delay);
@@ -434,6 +461,11 @@ int main(int argc, char* argv[]){
             mode = CAPTURING;
             imagePoints.clear();
         }
+
+
+        if(key == 'c' )
+            press_key_capture = true;
+
         //! [await_input]
     }
 
