@@ -30,14 +30,16 @@ SOURCES += \
         Preprocessing/preprocessing.cpp \
         Preprocessing/utils.cpp \
         Patron/structures.cpp \
-        Patron/mapping.cpp
+        Patron/mapping.cpp \
+    setting.cpp
 
 HEADERS += \
         mainwindow.h \
         Preprocessing/preprocessing.h \
         Preprocessing/utils.h \
         Patron/mapping.h \
-        Patron/structures.h
+        Patron/structures.h \
+        setting.h
 
 # OpenCV
 INCLUDEPATH += /usr/local/include/opencv2
@@ -50,7 +52,8 @@ QMAKE_CXXFLAGS += -fopenmp
 LIBS += -fopenmp
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    setting.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

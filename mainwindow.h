@@ -16,6 +16,15 @@
 #include <QtGui>
 #include <QFileDialog>
 
+#include <QDialogButtonBox>
+#include <QComboBox>
+#include <QVBoxLayout>
+#include <QLineEdit>
+
+#include <QGroupBox>
+
+#include "setting.h"
+
 #include "opencv2/opencv.hpp"
 #include <omp.h>
 
@@ -35,16 +44,18 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
+    void browseVideoClicked();
+    void browseSettingClicked();
+
     void on_pushButton_clicked();
     void on_actionOpen_triggered();
 
     void on_actionGrid3x4_triggered();
-
     void on_actionGrid4x5_triggered();
 
 private:
     Ui::MainWindow *ui;
-
+    void dialogSetting();
     // Graphics Pixmap
     QGraphicsPixmapItem PixOriginal  ;
     QGraphicsPixmapItem PixBinarized ;
@@ -52,10 +63,18 @@ private:
     QGraphicsPixmapItem PixEllipses  ;
     QGraphicsPixmapItem PixResult    ;
 
+
+    setting *w;
+
     // CV::Video
     cv::VideoCapture video;
 
+    // Parameters
     QString pathTo;
+    QString   type;
+    int  rows,cols;
+    int squareSize;
+
     int n_centers;
 };
 

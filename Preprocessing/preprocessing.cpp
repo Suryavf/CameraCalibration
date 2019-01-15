@@ -827,12 +827,13 @@ vector<Point2f> ellipses_order12(vector<Point2f> good_ellipses)
 void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
                    cv::Mat &morphology, cv::Mat  &ellipses ,
                    cv::Mat &result, cv::RotatedRect &minRec,
+                   vector<Point2f> &good_ellipses,
                    int &ellipseCount){
 
     int width  = frame.cols;
     int height = frame.rows;
     vector<Vec4i> hierarchy;
-
+    good_ellipses.clear();
 
 
 
@@ -873,7 +874,7 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     Ellipse purge
     -------------
  */
-    vector<Point2f> good_ellipses;
+    //vector<Point2f> good_ellipses;
     ellipsePurge(morphology,ellipses,minEllipse,
                     good_ellipses,width, height);
 
@@ -894,13 +895,13 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
  */
    if(good_ellipses.size() > 16){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width  = minRec.size.width *1.15f;
-        minRec.size.height = minRec.size.height*1.15f;
+        minRec.size.width  = minRec.size.width  + 100;
+        minRec.size.height = minRec.size.height + 100;
     }
     else if(good_ellipses.size() > 10){
         minRec = cv::minAreaRect( cv::Mat(good_ellipses) );
-        minRec.size.width  = minRec.size.width *1.5f;
-        minRec.size.height = minRec.size.height*1.5f;
+        minRec.size.width  = minRec.size.width + 200;
+        minRec.size.height = minRec.size.height+ 200;
     }else
     {
         minRec = cv::RotatedRect(cv::Point(frame.cols,         0),
@@ -957,4 +958,35 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     //waitKey(1);
 }
 
+void calcBoardCornerPositions(cv::Size &boardSize, float squareSize, vector<Point3f>& corners){
+    corners.clear();
 
+    for( int i = boardSize.height - 1; i > -1; --i )
+        for( int j = 0; j < boardSize.width; j++ )
+            corners.push_back(Point3f(float( j*squareSize ), float( i*squareSize ), 0));
+}
+
+double computeReprojectionErrors(const vector<vector<Point3f> >& objectPoints,
+                                 const vector<vector<Point2f> >& imagePoints,
+                                 const vector<Mat>& rvecs, const vector<Mat>& tvecs,
+                                 const Mat& cameraMatrix , const Mat& distCoeffs,
+                                 vector<float>& perViewErrors){
+    vector<Point2f> imagePoints2;
+    size_t totalPoints = 0;
+    double totalErr = 0, err;
+    perViewErrors.resize(objectPoints.size());
+
+    for(size_t i = 0; i < objectPoints.size(); ++i ){
+
+        projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+
+        err = norm(imagePoints[i], imagePoints2, NORM_L2);
+
+        size_t n = objectPoints[i].size();
+        perViewErrors[i] = float(std::sqrt(err*err/n));
+        totalErr        += err*err;
+        totalPoints     += n;
+    }
+
+    return std::sqrt(totalErr/totalPoints);
+}

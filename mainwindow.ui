@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1503</width>
-    <height>625</height>
+    <height>643</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>570</y>
+      <y>580</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -99,8 +99,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>580</y>
+      <x>100</x>
+      <y>600</y>
       <width>111</width>
       <height>17</height>
      </rect>
@@ -119,7 +119,7 @@
     <property name="geometry">
      <rect>
       <x>1070</x>
-      <y>580</y>
+      <y>590</y>
       <width>201</width>
       <height>17</height>
      </rect>
@@ -156,8 +156,8 @@
    <widget class="QLabel" name="ellipseCount">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>580</y>
+      <x>230</x>
+      <y>597</y>
       <width>51</width>
       <height>20</height>
      </rect>
@@ -287,7 +287,7 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>580</x>
       <y>580</y>
       <width>81</width>
       <height>17</height>
@@ -306,7 +306,7 @@
    <widget class="QLabel" name="accuracy">
     <property name="geometry">
      <rect>
-      <x>630</x>
+      <x>670</x>
       <y>580</y>
       <width>71</width>
       <height>20</height>
@@ -317,6 +317,111 @@
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="principalPoint">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>597</y>
+      <width>131</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>?</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="focalLength">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>580</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>?</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>580</y>
+      <width>111</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Focal length:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>600</y>
+      <width>111</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Principal point:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="totalAvgErr">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>600</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>?</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_11">
+    <property name="geometry">
+     <rect>
+      <x>580</x>
+      <y>600</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>T.Avg.Err.:</string>
     </property>
    </widget>
   </widget>
@@ -338,7 +443,15 @@
     <addaction name="actionGrid3x4"/>
     <addaction name="actionGrid4x5"/>
    </widget>
+   <widget class="QMenu" name="menuMode">
+    <property name="title">
+     <string>Mode</string>
+    </property>
+    <addaction name="actionModeTest"/>
+    <addaction name="actionModeCalibration"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuMode"/>
   </widget>
   <action name="actionOpen">
    <property name="text">
@@ -353,6 +466,16 @@
   <action name="actionGrid4x5">
    <property name="text">
     <string>Grid 4x5</string>
+   </property>
+  </action>
+  <action name="actionModeTest">
+   <property name="text">
+    <string>Test</string>
+   </property>
+  </action>
+  <action name="actionModeCalibration">
+   <property name="text">
+    <string>Calibration</string>
    </property>
   </action>
  </widget>
