@@ -1,6 +1,8 @@
 #ifndef SETTING_H
 #define SETTING_H
 
+#include <iostream>
+
 #include <QDialog>
 #include <QFileDialog>
 
@@ -16,8 +18,26 @@ public:
     explicit setting(QWidget *parent = nullptr);
     ~setting();
 
+    bool isAccepted(){return accepted;}
+    void getValues(QString &_dirVideoFile,
+                   QString &_typeGrid    ,
+                   int     &_squareSize  ,
+                   int     &_width       ,
+                   int     &_height      ){
+       std::cout << "Estoy en getValues" << std::endl;
+       std::cout << "PathTo en getValues:" << dirVideoFile.toStdString()  << std::endl;
+
+       std::cout << "-------------------------------------" << std::endl;
+       std::cout << "-------------------------------------" << std::endl;
+       _dirVideoFile = dirVideoFile;
+       _squareSize   =   squareSize;
+       _typeGrid     =     typeGrid;
+       _height       =       height;
+       _width        =        width;}
+
 private slots:
     void on_pushButtonVideoBrowse_clicked();
+    void on_buttonBox_accepted();
 
 private:
     Ui::setting *ui;
@@ -28,6 +48,8 @@ private:
 
     int   squareSize;
     int width,height;
+
+    bool accepted;
 };
 
 #endif // SETTING_H

@@ -25,6 +25,7 @@
 
 #include "setting.h"
 
+#include <chrono>
 #include "opencv2/opencv.hpp"
 #include <omp.h>
 
@@ -44,25 +45,16 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
-    void browseVideoClicked();
-    void browseSettingClicked();
-
-    void on_pushButton_clicked();
     void on_actionOpen_triggered();
-
-    void on_actionGrid3x4_triggered();
-    void on_actionGrid4x5_triggered();
 
 private:
     Ui::MainWindow *ui;
-    void dialogSetting();
     // Graphics Pixmap
     QGraphicsPixmapItem PixOriginal  ;
     QGraphicsPixmapItem PixBinarized ;
     QGraphicsPixmapItem PixMorphology;
     QGraphicsPixmapItem PixEllipses  ;
     QGraphicsPixmapItem PixResult    ;
-
 
     setting *w;
 
@@ -75,7 +67,13 @@ private:
     int  rows,cols;
     int squareSize;
 
+    bool mode; // Test: 0, Calibration: 1
+
     int n_centers;
+
+    void drawWindows(cv::Mat &sec1, cv::Mat &sec2,cv::Mat &sec3, cv::Mat &sec4, cv::Mat &_main);
+    void testRoutine();
+    void calibrationRoutine();
 };
 
 #endif // MAINWINDOW_H
