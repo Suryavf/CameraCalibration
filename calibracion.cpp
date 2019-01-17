@@ -233,10 +233,7 @@ private:
 
 
 };
-
 bool findRingsGrid( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, Mat &result, RotatedRect &minRect, Size &boardSize, vector<Point2f> &pointBuf);
-
-vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point2f> dst_vertices, int offset);
 
 static inline void read(const FileNode& node, Settings& x, const Settings& default_value = Settings()){
     if(node.empty())
@@ -373,8 +370,6 @@ int main(int argc, char* argv[]){
         String filename = "/home/laura/Escritorio/Imágenes/Calibration1/CameraCalibration/Frames_Rings/frame";
         String filename2 = "/home/laura/Escritorio/Imágenes/Calibration1/CameraCalibration/Frames_Rings_Color/frame";
         bool color_frame = false;
-        //Mat view_auxiliary;
-        //view_auxiliary = view.clone();
 
         if ( found )                // If done with success,
         {
@@ -397,8 +392,6 @@ int main(int argc, char* argv[]){
                     color_frame = true;
 
                 }
-
-                
 
                 // Draw the corners.
                 drawChessboardCorners( view, s.boardSize, Mat(pointBuf), found );
@@ -446,32 +439,6 @@ int main(int argc, char* argv[]){
               cv::fisheye::undistortImage(temp, view, cameraMatrix, distCoeffs);
             else
               undistort(temp, view, cameraMatrix, distCoeffs);
-
-            if(found)
-            {
-                //---------Obteniendo Fronto-Parallel-------------
-                float radioPeque = view.cols/24;
-                vector<Point2f> dst_vertices;
-                dst_vertices.push_back( Point(0, 0) );
-                dst_vertices.push_back( Point(view.cols, 0) );
-                dst_vertices.push_back( Point(0, view.rows) );
-                dst_vertices.push_back( Point(view.cols, view.rows) );
-
-                vector<Point2f> src_vertices = getExtremePoints(view, pointBuf, dst_vertices, radioPeque*3);
-
-                for(int i=0; i < src_vertices.size(); i++)
-                {
-                    circle(view, src_vertices[i], 4,cv::Scalar(35,255,75), -1, 8, 0);
-                }
-                radioPeque = view.cols/30;
-
-                Mat rotated;
-                Mat H = findHomography(src_vertices, dst_vertices);
-                //warpPerspective(view_auxiliary, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-                warpPerspective(view, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-                imshow("FRONTO-PARALLEL IMAGE", rotated);
-            }
 
         }
         //! [output_undistorted]
@@ -1466,12 +1433,12 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     ellipsePurge(morphology,ellipses,minEllipse,
                     good_ellipses,width, height);
 
-    auto it = std::remove_if(good_ellipses.begin(),
+    /*auto it = std::remove_if(good_ellipses.begin(),
                              good_ellipses.  end(),
                              [&minRec](Point2f &p){
                                 return DoesntRectangleContainPoint(minRec,p);
                             });
-    good_ellipses.erase(it,good_ellipses.end());
+    good_ellipses.erase(it,good_ellipses.end());*/
 
 /*
     Update ROI
@@ -1563,38 +1530,3 @@ bool findRingsGrid( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, M
     return false;
 
 }
-
-vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point2f> dst_vertices, int offset)
-{
-
-    vector<Point2f> src_vertices;
-    src_vertices.push_back( Point(pointBuf[15].x, pointBuf[15].y ) );
-    src_vertices.push_back( Point(pointBuf[19].x, pointBuf[19].y ) );
-    src_vertices.push_back( Point(pointBuf[0 ].x, pointBuf[0 ].y ) );
-    src_vertices.push_back( Point(pointBuf[4 ].x, pointBuf[4 ].y ) );
-
-
-
-    Mat H = findHomography(src_vertices, dst_vertices);
-    //Matx33f H = getPerspectiveTransform(src_vertices, dst_vertices);
-
-    cv::Mat rotated;
-    warpPerspective(view, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-    vector<Point2f> new_vertices;
-    int width = view.cols, height = view.rows;
-    new_vertices.push_back( Point(0-offset, 0-offset) );
-    new_vertices.push_back( Point(width+offset, 0-offset) );
-    new_vertices.push_back( Point(0-offset, height+offset) );
-    new_vertices.push_back( Point(width+offset, height+offset) );
-
-
-    perspectiveTransform( new_vertices, new_vertices, H.inv());
-
-
-    //imshow("Fronto-Parallel-Corto", rotated);
-    //waitKey(0);
-    return new_vertices;
-}
-                                                                                                
-
