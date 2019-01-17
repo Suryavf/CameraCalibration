@@ -51,6 +51,9 @@
      <height>25</height>
     </rect>
    </property>
+   <property name="text">
+    <string/>
+   </property>
   </widget>
   <widget class="QPushButton" name="pushButtonVideoBrowse">
    <property name="geometry">
@@ -148,6 +151,9 @@
       <height>25</height>
      </rect>
     </property>
+    <property name="text">
+     <string>44</string>
+    </property>
    </widget>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
@@ -184,6 +190,9 @@
       <height>25</height>
      </rect>
     </property>
+    <property name="text">
+     <string>4</string>
+    </property>
    </widget>
    <widget class="QLineEdit" name="txtHeight">
     <property name="geometry">
@@ -193,6 +202,9 @@
       <width>71</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>3</string>
     </property>
    </widget>
   </widget>

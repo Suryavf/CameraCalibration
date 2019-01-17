@@ -5,6 +5,9 @@ setting::setting(QWidget *parent) : QDialog(parent),
                                     ui(new Ui::setting){
     ui->setupUi(this);
     accepted = false;
+
+    //ui->txtHeight ->setText("3");
+    //ui->txtWidth  ->setText("4");
 }
 
 setting::~setting(){
@@ -13,8 +16,10 @@ setting::~setting(){
 
 void setting::on_pushButtonVideoBrowse_clicked(){
     QString pathTo;
-    pathTo = QFileDialog::getOpenFileName(this, tr("Open video"), "",
+
+    pathTo = QFileDialog::getOpenFileName(this, tr("Open video"), "/home/victor/Vídeos/data",
                                                 tr("Video (*.avi *.mp4);;All Files (*)"));
+
     dirVideoFile = pathTo;
     ui->txtVideoFile->setText(pathTo);
 }
@@ -22,7 +27,8 @@ void setting::on_pushButtonVideoBrowse_clicked(){
 void setting::on_buttonBox_accepted(){
     accepted = true;
 
-    squareSize = ui->txtSquareSize->selectedText().toInt();
-    height     = ui->txtHeight    ->selectedText().toInt();
-    width      = ui->txtWidth     ->selectedText().toInt();
+    squareSize = ui->txtSquareSize->text().toInt();
+    typeGrid   = ui->comboBoxTypeGrid->currentText();
+    height     = ui->txtHeight    ->text().toInt();
+    width      = ui->txtWidth     ->text().toInt();
 }

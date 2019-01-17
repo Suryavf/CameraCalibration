@@ -31,7 +31,8 @@ SOURCES += \
         Preprocessing/utils.cpp \
         Patron/structures.cpp \
         Patron/mapping.cpp \
-    setting.cpp
+    setting.cpp \
+    calibratedgrid.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -39,7 +40,8 @@ HEADERS += \
         Preprocessing/utils.h \
         Patron/mapping.h \
         Patron/structures.h \
-        setting.h
+        setting.h \
+    calibratedgrid.h
 
 # OpenCV
 INCLUDEPATH += /usr/local/include/opencv2

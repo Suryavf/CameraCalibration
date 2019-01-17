@@ -24,11 +24,7 @@ public:
                    int     &_squareSize  ,
                    int     &_width       ,
                    int     &_height      ){
-       std::cout << "Estoy en getValues" << std::endl;
-       std::cout << "PathTo en getValues:" << dirVideoFile.toStdString()  << std::endl;
 
-       std::cout << "-------------------------------------" << std::endl;
-       std::cout << "-------------------------------------" << std::endl;
        _dirVideoFile = dirVideoFile;
        _squareSize   =   squareSize;
        _typeGrid     =     typeGrid;

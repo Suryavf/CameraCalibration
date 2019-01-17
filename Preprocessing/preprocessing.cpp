@@ -847,8 +847,8 @@ void gridDetection(cv::Mat &frame     , cv::Mat  &binarized,
     //binarized = cv::Mat(gray);
     //thresholdIntegral(gray, binarized);
 
-    adaptiveThreshold(gray, binarized, 255, 0, THRESH_BINARY,11,3);
-    //adaptiveThreshold(gray, binarized, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
+    //adaptiveThreshold(gray, binarized, 255, 0, THRESH_BINARY,11,3);
+    adaptiveThreshold(gray, binarized, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,11,3);
 
 /*
     Morphological Transformations

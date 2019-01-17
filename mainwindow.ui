@@ -411,6 +411,19 @@
      <string>Total Avg. Error:</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButtonCapture">
+    <property name="geometry">
+     <rect>
+      <x>1360</x>
+      <y>400</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Capture</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -427,8 +440,6 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="separator"/>
-    <addaction name="actionGrid3x4"/>
-    <addaction name="actionGrid4x5"/>
     <addaction name="actionStart"/>
    </widget>
    <widget class="QMenu" name="menuMode">
@@ -446,16 +457,6 @@
     <string>Open Video</string>
    </property>
   </action>
-  <action name="actionGrid3x4">
-   <property name="text">
-    <string>Grid 3x4</string>
-   </property>
-  </action>
-  <action name="actionGrid4x5">
-   <property name="text">
-    <string>Grid 4x5</string>
-   </property>
-  </action>
   <action name="actionModeTest">
    <property name="text">
     <string>Test</string>
@@ -464,11 +465,6 @@
   <action name="actionModeCalibration">
    <property name="text">
     <string>Calibration</string>
-   </property>
-  </action>
-  <action name="actionOpen_Cam">
-   <property name="text">
-    <string>Open Cam</string>
    </property>
   </action>
   <action name="actionStart">

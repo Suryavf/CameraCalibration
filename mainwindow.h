@@ -24,10 +24,13 @@
 #include <QGroupBox>
 
 #include "setting.h"
+#include "calibratedgrid.h"
 
 #include <chrono>
 #include "opencv2/opencv.hpp"
 #include <omp.h>
+
+#define FRAMES_BY_CALIBRATE 30
 
 namespace Ui {
 class MainWindow;
@@ -47,6 +50,12 @@ protected:
 private slots:
     void on_actionOpen_triggered();
 
+    void on_actionModeTest_triggered();
+
+    void on_actionModeCalibration_triggered();
+
+    void on_pushButtonCapture_clicked();
+
 private:
     Ui::MainWindow *ui;
     // Graphics Pixmap
@@ -62,12 +71,13 @@ private:
     cv::VideoCapture video;
 
     // Parameters
-    QString pathTo;
-    QString   type;
-    int  rows,cols;
-    int squareSize;
+    QString   pathTo;
+    QString     type;
+    int width,height;
+    int   squareSize;
 
     bool mode; // Test: 0, Calibration: 1
+    bool capture;
 
     int n_centers;
 
