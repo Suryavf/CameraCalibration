@@ -1467,8 +1467,6 @@ vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point
     src_vertices.push_back( Point(pointBuf[0 ].x, pointBuf[0 ].y ) );
     src_vertices.push_back( Point(pointBuf[4 ].x, pointBuf[4 ].y ) );
 
-
-
     Mat H = findHomography(src_vertices, dst_vertices);
     //Matx33f H = getPerspectiveTransform(src_vertices, dst_vertices);
 
@@ -1484,6 +1482,8 @@ vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point
 
     perspectiveTransform( new_vertices, new_vertices, H.inv());
 
+    //imshow("Fronto-Parallel-Corto", rotated);
+    //waitKey(0);
     return new_vertices;
 }
 
@@ -1508,10 +1508,10 @@ bool findPattern(cv::Mat  &frame      , cv::Mat &binarized,
     double start_time = omp_get_wtime();
 
     if     (type == "Chessboard grid"){
-         found = findChessboardCorners( frame,
-                                        patternSize,
-                                        framePoints,
-                                        CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);
+        found = findChessboardCorners( frame,
+                                       patternSize,
+                                       framePoints,
+                                       CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);
         if(found) countPoints = patternSize.width * patternSize.height;
 
         cv::Mat gray;

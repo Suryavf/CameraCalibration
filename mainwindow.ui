@@ -338,7 +338,7 @@
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="label_9">
+   <widget class="QLabel" name="labelFocalLength">
     <property name="geometry">
      <rect>
       <x>1360</x>
@@ -357,7 +357,7 @@
      <string>Focal length:</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_10">
+   <widget class="QLabel" name="labelPrincipalPoint">
     <property name="geometry">
      <rect>
       <x>1360</x>
@@ -392,7 +392,7 @@
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="label_11">
+   <widget class="QLabel" name="labelTotalAvgErr">
     <property name="geometry">
      <rect>
       <x>1360</x>
@@ -414,7 +414,7 @@
    <widget class="QPushButton" name="pushButtonCapture">
     <property name="geometry">
      <rect>
-      <x>1360</x>
+      <x>1450</x>
       <y>400</y>
       <width>89</width>
       <height>25</height>
@@ -422,6 +422,19 @@
     </property>
     <property name="text">
      <string>Capture</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonCalibrationMode">
+    <property name="geometry">
+     <rect>
+      <x>1360</x>
+      <y>400</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Manual</string>
     </property>
    </widget>
   </widget>
