@@ -37,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     calibrationMode = false;  // manual | automatic
     capture         = false;
 
+    gridSize = 10;
+
     ui->actionModeTest           ->setEnabled(false);
     ui->actionModeCalibration    ->setEnabled( true);
     ui->pushButtonCapture        ->setVisible(false);
@@ -361,6 +363,7 @@ void MainWindow::calibrationRoutine(){
     vector<Point2f> framePoints;
     vector<vector<Point2f> > calibratePoints;
 
+    //int  **gridCloudPoints;
     bool loadingCalibrate = true;
 
 /*
@@ -373,6 +376,12 @@ void MainWindow::calibrationRoutine(){
     n_centers = width*height;
     cv::Size patternSize = cv::Size(width,height);
 
+    vector<vector<int>> gridCloudPoints(gridSize, vector<int> (gridSize, 0));
+
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0,100000);
+
 /*
  *  Video
  *  -----
@@ -383,6 +392,23 @@ void MainWindow::calibrationRoutine(){
     cloudPoints = cv::Mat(frame.size(), CV_8UC3, Scalar(0,0,0)); ;
     cloudPoints.copyTo(cloudPointsOut);
 
+
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    std::ofstream outfileAngle;
+    outfileAngle   .open("angleCam2.txt", std::ios_base::app);
+
+    std::ofstream outfileArea;
+    outfileArea    .open( "areaCam2.txt", std::ios_base::app);
+
+    std::ofstream outfilePosition;
+    outfilePosition.open(  "posCam2.txt", std::ios_base::app);
+
+
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 /*
  *  Main loop
  *  ---------
@@ -392,7 +418,7 @@ void MainWindow::calibrationRoutine(){
     std::chrono::system_clock::time_point timeNext;
     while(video.isOpened()){
         video >> frame;
-        timeNext = std::chrono::system_clock::now() + std::chrono::milliseconds( int(800/fps) );
+        timeNext = std::chrono::system_clock::now() + std::chrono::milliseconds( int(8/fps) );
 
         if(!frame.empty()) {
 
@@ -430,13 +456,31 @@ void MainWindow::calibrationRoutine(){
 
                 //- Automatic frame selection
                     if(calibrationMode){
-                        capture;
+                        double area = frame.rows*frame.cols;
+                        Size windowsize = frame.size();
+
+                        float roulette = float(dist(rng))/100000.0f;
+                        float prob = frameSelection(framePoints, gridCloudPoints, gridSize, windowsize, area);
+
+                        cout << "Roulette: " << roulette << ". Probability: " << prob << ". Capture: " << capture << endl << endl << endl;
+
+                        capture = ( roulette<prob );
                     }
+
+
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 
                 //- Capture frame
                     if(capture){
+
+                        // Automatic frame selection
+                        if(calibrationMode){
+                            Size windowsize = frame.size();
+                            addPointsToCloudPoints(framePoints, gridCloudPoints, gridSize, windowsize);
+                        }
 
                         // Save points
                         calibratePoints.push_back(framePoints);
@@ -592,6 +636,21 @@ void MainWindow::calibrationRoutine(){
     }
 
 
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    outfileAngle   .close();
+    outfileArea    .close();
+    outfilePosition.close();
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
     /*
 
 bool findPattern(cv::Mat &frame     , cv::Mat &binarized,
@@ -668,3 +727,143 @@ void MainWindow::drawWindows(cv::Mat &sec1, cv::Mat &sec2,cv::Mat &sec3, cv::Mat
     ui->result->fitInView(&PixResult, Qt::KeepAspectRatio);
 }
 
+float MainWindow::frameSelection(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize, double &totalArea){
+    float prob1 = probabilityByArea    (pts, totalArea);
+    float prob2 = probabilityByPosition(pts, gridCloudPoints,
+                                        gridSize, windowsize);
+
+    cout << "Prob. Area: " << prob1 << ". Prob. Position: " << prob2 << endl;
+    return prob1*prob2;
+}
+
+
+
+float probabilityByAngle(vector<Point2f> &pts){
+    // Corners Pattern
+    double x1 = double(pts[ 0].x), y1 = double(pts[ 0].y);
+    double x2 = double(pts[ 4].x), y2 = double(pts[ 4].y);
+    double x3 = double(pts[15].x), y3 = double(pts[15].y);
+    double x4 = double(pts[19].x), y4 = double(pts[19].y);
+
+    // Sides Pattern
+    double x21 = sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) );
+    double x31 = sqrt( (x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) );
+    double x42 = sqrt( (x4-x2)*(x4-x2) + (y4-y2)*(y4-y2) );
+    double x43 = sqrt( (x4-x3)*(x4-x3) + (y4-y3)*(y4-y3) );
+
+    double asp431 = double(5.0/4.0)*100/(x43/x31) ;
+    double asp421 = double(5.0/4.0)*100/(x21/x42) ;
+
+    //cout << endl;
+
+    // First angle
+    double a = abs( x42 - x31 );
+    double b =        x43      ;
+    double c =        x21      ;
+
+    double cosA = abs(b*b + c*c - a*a)/(2*b*c);
+    double senAcosA = cosA*sqrt(1 - cosA*cosA);
+
+    /*
+    cout << "First angle:" << endl;
+    cout << "a=" << a << "\tb=" << b << "\tc=" << c << endl;
+    cout << "cosA=" << cosA << endl;
+    cout << "senAcosA=" << senAcosA << endl;
+    cout << endl;
+    */
+
+    // Second angle
+    a =        x42      ;
+    b =        x31      ;
+    c = abs( x21 - x43 );
+
+    double cosC = abs(a*a + b*b - c*c)/(2*a*b);
+    double senCcosC = cosC*sqrt(1 - cosC*cosC);
+
+    /*
+    cout << "Second angle:" << endl;
+    cout << "a=" << a << "\tb=" << b << "\tc=" << c << endl;
+    cout << "cosC=" << cosC << endl;
+    cout << "senCcosC=" << senCcosC << endl;
+    cout << endl;
+    cout << endl;
+    */
+
+    return float( asp431 + asp421 )/2;// float(senAcosA + senCcosC);
+}
+
+
+float probabilityByArea(vector<Point2f> &pts, double &totalArea){
+    // Corners Pattern
+    double x1 = double(pts[ 0].x), y1 = double(pts[ 0].y);
+    double x2 = double(pts[ 4].x), y2 = double(pts[ 4].y);
+    double x3 = double(pts[15].x), y3 = double(pts[15].y);
+    double x4 = double(pts[19].x), y4 = double(pts[19].y);
+
+    double sum;
+    sum  = (x1*y2 - x2*y1);
+    sum += (x2*y3 - x3*y2);
+    sum += (x3*y4 - x4*y2);
+
+    double area = abs( sum/2 )/totalArea;
+
+    return float( exp( -(area-0.1710)*(area-0.1710)/(2*0.0874*0.0874) ) );
+}
+
+
+float probabilityByPosition(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize){
+
+    float stepRow = float(windowsize. width)/float(gridSize);
+    float stepCol = float(windowsize.height)/float(gridSize);
+
+    size_t row,col;
+
+    // Check
+    int minGrid=999999999, maxGrid = -1, sumGrid = 0;
+    int value;
+    size_t i,j,n;
+    for(i=0; i<gridSize; ++i){
+        for(j=0; j<gridSize; ++j){
+            value = gridCloudPoints[i][j];
+            if(value < minGrid) minGrid = value;
+            if(value > maxGrid) maxGrid = value;
+            sumGrid += value;
+        }
+    }
+
+    // Update
+    float prob = 0.0f;
+    for (n=0; n<pts.size(); ++n){
+        row = size_t(pts[n].x/stepRow);
+        col = size_t(pts[n].y/stepCol);
+
+        prob += gridCloudPoints[row][col];
+    }
+
+    cout << "minGrid: " << minGrid << ". maxGrid: " << maxGrid << endl;
+    cout << "sumGrid: " << sumGrid << endl;
+    cout << "prob: " << prob;
+
+    prob = (float( maxGrid*int(pts.size()) ) - prob )/float( maxGrid*10*10 - sumGrid ); //3.0f*
+
+    cout << "\tprob: " << prob << endl;
+
+    if (maxGrid == 0) prob = 1;
+    if (prob <= 0.0f) prob = 1;
+    return prob;
+}
+
+
+void addPointsToCloudPoints(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize){
+    size_t row,col,n;
+
+    float stepRow = float(windowsize. width)/float(gridSize);
+    float stepCol = float(windowsize.height)/float(gridSize);
+
+    for (n=0; n<pts.size(); ++n){
+        row = size_t(pts[n].x/stepRow);
+        col = size_t(pts[n].y/stepCol);
+
+        ++gridCloudPoints[row][col];
+    }
+}

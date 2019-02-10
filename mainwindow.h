@@ -26,8 +26,12 @@
 #include "setting.h"
 #include "calibratedgrid.h"
 
+#include <random>
+#include <iostream>
+
 #include <thread>
 #include <chrono>
+#include <math.h>
 #include "opencv2/opencv.hpp"
 #include <omp.h>
 
@@ -54,7 +58,6 @@ private slots:
     void on_actionModeCalibration_triggered();
 
     void on_pushButtonCapture_clicked();
-
     void on_pushButtonCalibrationMode_clicked();
 
 private:
@@ -72,22 +75,31 @@ private:
     cv::VideoCapture video;
 
     // Parameters
-    QString   pathTo;
-    QString     type;
-    int width,height;
+    QString   pathTo;   // Path video file
+    QString     type;   // Pattern type
+    int width,height;   // Pattern dimension (width x height)
     int   squareSize;
-    int          fps;
+    int          fps;   // Frame per second
+
+    size_t gridSize;    // Tamaño de la malla (gridSize x gridSize)
+                        // [Automatica Calibration]
 
     bool            mode; // Test: 0, Calibration: 1
     bool         capture; // Capture points
     bool calibrationMode; // Manual: 0, Automatic: 1
 
-    int n_centers;
+    int n_centers;  // Number of centers (gridSize * gridSize)
 
     void drawWindows(cv::Mat &sec1, cv::Mat &sec2,cv::Mat &sec3, cv::Mat &sec4, cv::Mat &_main);
     void testRoutine();
     void calibrationRoutine();
-    void frameSelection();
+    float frameSelection(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize, double &totalArea);
 };
+
+float probabilityByAngle   (vector<Point2f> &pts);
+float probabilityByArea    (vector<Point2f> &pts, double &totalArea);
+float probabilityByPosition(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize);
+
+void addPointsToCloudPoints(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize);
 
 #endif // MAINWINDOW_H
