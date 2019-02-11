@@ -35,7 +35,7 @@
 #include "opencv2/opencv.hpp"
 #include <omp.h>
 
-#define FRAMES_BY_CALIBRATE 30
+#define FRAMES_BY_CALIBRATE 50
 
 namespace Ui {
 class MainWindow;
@@ -93,10 +93,11 @@ private:
     void drawWindows(cv::Mat &sec1, cv::Mat &sec2,cv::Mat &sec3, cv::Mat &sec4, cv::Mat &_main);
     void testRoutine();
     void calibrationRoutine();
-    float frameSelection(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize, double &totalArea);
+    float frameSelection(vector<Point2f> &pts, vector<Point2f> &gridRealPoints, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize, double &totalArea,int &timelapse);
 };
 
-float probabilityByAngle   (vector<Point2f> &pts);
+float probabilityByTime    (int &timelapse);
+float probabilityByAngle   (vector<Point2f> &pts,vector<Point2f> &gridRealPoints);
 float probabilityByArea    (vector<Point2f> &pts, double &totalArea);
 float probabilityByPosition(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize);
 

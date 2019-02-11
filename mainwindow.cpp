@@ -124,11 +124,13 @@ void MainWindow::on_pushButtonCalibrationMode_clicked(){
 //  Manual: 0, Automatic: 1
     if(calibrationMode){
         calibrationMode = false;
-        ui->pushButtonCalibrationMode->setText("Automatic");
+        ui->pushButtonCalibrationMode->setText("Manual");
+        ui->pushButtonCapture ->setVisible(true);
 
     }else{
         calibrationMode =  true;
-        ui->pushButtonCalibrationMode->setText("Manual");
+        ui->pushButtonCalibrationMode->setText("Automatic");
+        ui->pushButtonCapture ->setVisible(false);
     }
 
 }
@@ -378,6 +380,9 @@ void MainWindow::calibrationRoutine(){
 
     vector<vector<int>> gridCloudPoints(gridSize, vector<int> (gridSize, 0));
 
+    vector<Point2f> gridRealPoints;
+    calcBoardCornerPositions(patternSize, squareSize, gridRealPoints, type);
+
     std::mt19937 rng;
     rng.seed(std::random_device()());
     std::uniform_int_distribution<std::mt19937::result_type> dist(0,100000);
@@ -415,10 +420,11 @@ void MainWindow::calibrationRoutine(){
  */
     Mat cameraMatrix, distCoeffs;
     int countTrue = 0, countFrames = 0;
+    int lastSelect = 0; // Only automatic selection for camera calibration
     std::chrono::system_clock::time_point timeNext;
     while(video.isOpened()){
         video >> frame;
-        timeNext = std::chrono::system_clock::now() + std::chrono::milliseconds( int(8/fps) );
+        timeNext = std::chrono::system_clock::now() + std::chrono::milliseconds( int(800/fps) );
 
         if(!frame.empty()) {
 
@@ -458,9 +464,10 @@ void MainWindow::calibrationRoutine(){
                     if(calibrationMode){
                         double area = frame.rows*frame.cols;
                         Size windowsize = frame.size();
+                        int timelapse = countFrames - lastSelect;
 
                         float roulette = float(dist(rng))/100000.0f;
-                        float prob = frameSelection(framePoints, gridCloudPoints, gridSize, windowsize, area);
+                        float prob = frameSelection(framePoints, gridRealPoints, gridCloudPoints, gridSize, windowsize, area,timelapse);
 
                         cout << "Roulette: " << roulette << ". Probability: " << prob << ". Capture: " << capture << endl << endl << endl;
 
@@ -475,6 +482,7 @@ void MainWindow::calibrationRoutine(){
 
                 //- Capture frame
                     if(capture){
+                        lastSelect = countFrames;
 
                         // Automatic frame selection
                         if(calibrationMode){
@@ -727,18 +735,58 @@ void MainWindow::drawWindows(cv::Mat &sec1, cv::Mat &sec2,cv::Mat &sec3, cv::Mat
     ui->result->fitInView(&PixResult, Qt::KeepAspectRatio);
 }
 
-float MainWindow::frameSelection(vector<Point2f> &pts, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize, double &totalArea){
+float MainWindow::frameSelection(vector<Point2f> &pts, vector<Point2f> &gridRealPoints, vector<vector<int>> &gridCloudPoints, size_t &gridSize, Size &windowsize, double &totalArea,int &timelapse){
+    float prob0 = probabilityByTime    (timelapse     );
     float prob1 = probabilityByArea    (pts, totalArea);
     float prob2 = probabilityByPosition(pts, gridCloudPoints,
                                         gridSize, windowsize);
+    float prob3 = probabilityByAngle   (pts, gridRealPoints);
 
-    cout << "Prob. Area: " << prob1 << ". Prob. Position: " << prob2 << endl;
-    return prob1*prob2;
+    cout << "Prob. Time: " << prob0 << ". Prob. Area: " << prob1 << ". Prob. Position: " << prob2 << endl;
+    return prob0*prob1*prob2*prob3;
 }
 
 
 
-float probabilityByAngle(vector<Point2f> &pts){
+float probabilityByAngle(vector<Point2f> &pts,vector<Point2f> &gridRealPoints){
+    Mat H;
+
+    H = findHomography(pts,gridRealPoints);
+
+    double norm = sqrt(H.at<double>(0,0)*H.at<double>(0,0) +
+                       H.at<double>(1,0)*H.at<double>(1,0) +
+                       H.at<double>(2,0)*H.at<double>(2,0));
+
+    H /= norm;
+    Mat c1  = H.col(0);
+    Mat c2  = H.col(1);
+    Mat c3 = c1.cross(c2);
+    Mat tvec = H.col(2);
+    Mat R(3, 3, CV_64F);
+    for (int i = 0; i < 3; i++){
+        R.at<double>(i,0) = c1.at<double>(i,0);
+        R.at<double>(i,1) = c2.at<double>(i,0);
+        R.at<double>(i,2) = c3.at<double>(i,0);
+    }
+
+    //R /= determinant(R);
+/*
+    cout << "Rotation:" << endl;
+    for(int i=0; i<R.rows; ++i){
+        for(int j=0;j <R.cols; ++j){
+            cout << R.at<double>(i,j) << "\t";
+        }
+        cout << "\n";
+    }
+    cout << endl;
+*/
+
+    double trazaR = R.at<double>(0,0) + R.at<double>(1,1) + R.at<double>(2,2);
+    double angle = acos( (abs(trazaR)-1)/2 ) * 180.0 / 3.14159265;
+    //cout << "(trazaR-1)/2 )=" << (abs(trazaR)-1)/2  << endl;
+    //cout << "Angle Rotation:" << acos( (abs(trazaR)-1)/2 ) * 180.0 / 3.14159265<< endl;
+
+    /*
     // Corners Pattern
     double x1 = double(pts[ 0].x), y1 = double(pts[ 0].y);
     double x2 = double(pts[ 4].x), y2 = double(pts[ 4].y);
@@ -764,13 +812,6 @@ float probabilityByAngle(vector<Point2f> &pts){
     double cosA = abs(b*b + c*c - a*a)/(2*b*c);
     double senAcosA = cosA*sqrt(1 - cosA*cosA);
 
-    /*
-    cout << "First angle:" << endl;
-    cout << "a=" << a << "\tb=" << b << "\tc=" << c << endl;
-    cout << "cosA=" << cosA << endl;
-    cout << "senAcosA=" << senAcosA << endl;
-    cout << endl;
-    */
 
     // Second angle
     a =        x42      ;
@@ -780,16 +821,10 @@ float probabilityByAngle(vector<Point2f> &pts){
     double cosC = abs(a*a + b*b - c*c)/(2*a*b);
     double senCcosC = cosC*sqrt(1 - cosC*cosC);
 
-    /*
-    cout << "Second angle:" << endl;
-    cout << "a=" << a << "\tb=" << b << "\tc=" << c << endl;
-    cout << "cosC=" << cosC << endl;
-    cout << "senCcosC=" << senCcosC << endl;
-    cout << endl;
-    cout << endl;
-    */
 
     return float( asp431 + asp421 )/2;// float(senAcosA + senCcosC);
+    */
+    return float(exp( -(angle-60)*(angle-60)/(24*24) )+exp( -(angle-120)*(angle-120)/(24*24) ));
 }
 
 
@@ -839,18 +874,16 @@ float probabilityByPosition(vector<Point2f> &pts, vector<vector<int>> &gridCloud
 
         prob += gridCloudPoints[row][col];
     }
-
-    cout << "minGrid: " << minGrid << ". maxGrid: " << maxGrid << endl;
-    cout << "sumGrid: " << sumGrid << endl;
-    cout << "prob: " << prob;
-
     prob = (float( maxGrid*int(pts.size()) ) - prob )/float( maxGrid*10*10 - sumGrid ); //3.0f*
-
-    cout << "\tprob: " << prob << endl;
 
     if (maxGrid == 0) prob = 1;
     if (prob <= 0.0f) prob = 1;
     return prob;
+}
+
+
+float probabilityByTime(int &timelapse){
+    return 1.0f/( 1.0f + float(exp( -float(timelapse-30)/6.0f )));
 }
 
 
