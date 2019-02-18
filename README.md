@@ -16,14 +16,19 @@ g++ -std=c++11 calibracion.cpp -o main `pkg-config --cflags --libs opencv`&& ./m
 
 Change the pattern and settings in the file: default.xml
 
-## Compilation and execution basic program
+## Execute GUI program
 
 Compile CameraCalibration.pro in Qt 5.11.
 
-## Usage
+## Execute program
 
-Execute program.
+Change the file default.xml with the video to calibrate in the line 25 with "videos/cam1/anillos.mp4"
 
+Execute calibration.cpp with the next command: g++ FinalCalibration/calibracion.cpp -o calibracion `pkg-config --cflags --libs opencv`. After that put the command ./calibration
+
+Change the file default.xml with the carpet which contains the selected frames in the line 25 with "frames_iterative.xml"
+
+Execute FinalCalibration/calibration.cpp with the next command: g++ calibracionIt.cpp -o calibracion `pkg-config --cflags --libs opencv`. After that put the command ./calibration
 
 ## Test
 
