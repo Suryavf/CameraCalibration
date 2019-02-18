@@ -367,8 +367,8 @@ int main(int argc, char* argv[]){
         //! [pattern_found]
 
         // ============================================ FRAMES ====================================
-        String filename = "/home/laura/Escritorio/Imágenes/Calibration1/CameraCalibration/Frames_Rings/frame";
-        String filename2 = "/home/laura/Escritorio/Imágenes/Calibration1/CameraCalibration/Frames_Rings_Color/frame";
+        String filename  = "/home/victor/Documentos/Imagenes/CameraCalibration/Frames_Rings/frame";
+        String filename2 = "/home/victor/Documentos/Imagenes/CameraCalibration/Frames_Rings_Color/frame";
         bool color_frame = false;
 
         if ( found )                // If done with success,

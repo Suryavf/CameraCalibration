@@ -397,28 +397,13 @@ void MainWindow::calibrationRoutine(){
     cloudPoints = cv::Mat(frame.size(), CV_8UC3, Scalar(0,0,0)); ;
     cloudPoints.copyTo(cloudPointsOut);
 
-
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-    std::ofstream outfileAngle;
-    outfileAngle   .open("angleCam2.txt", std::ios_base::app);
-
-    std::ofstream outfileArea;
-    outfileArea    .open( "areaCam2.txt", std::ios_base::app);
-
-    std::ofstream outfilePosition;
-    outfilePosition.open(  "posCam2.txt", std::ios_base::app);
-
-
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 /*
  *  Main loop
  *  ---------
  */
     Mat cameraMatrix, distCoeffs;
+    Mat imgCorregida;
+    Mat frontoParallel;
     int countTrue = 0, countFrames = 0;
     int lastSelect = 0; // Only automatic selection for camera calibration
     std::chrono::system_clock::time_point timeNext;
@@ -473,12 +458,6 @@ void MainWindow::calibrationRoutine(){
 
                         capture = ( roulette<prob );
                     }
-
-
-    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
 
                 //- Capture frame
                     if(capture){
@@ -578,6 +557,58 @@ void MainWindow::calibrationRoutine(){
             //  -----------------
                 else{
 
+                    if(type == "Ring grid" && findPattern(frame,binarized,
+                                                          morphology,ellipses,
+                                                          result,
+                                                          patternSize,
+                                                          minRect,
+                                                          framePoints,type,
+                                                          countPoints,
+                                                          timeLapse) ){
+                        // Un-distorting
+                        imgCorregida = frame.clone();
+                        undistort(frame, framePoints, cameraMatrix, distCoeffs);
+
+                        frontoParallel = imgCorregida.clone();
+
+                        vector<Point2f> framePointsCorregidos;
+                        undistortPoints(calibratePoints, framePointsCorregidos, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix);
+                        drawChessboardCorners( imgCorregida, patternSize, Mat(framePointsCorregidos), true );
+
+
+                        //---------Obteniendo Fronto-Parallel-------------
+                        float radioPeque = frame.cols/24;
+                        vector<Point2f> dst_vertices;
+                        dst_vertices.push_back( Point(0, 0) );
+                        dst_vertices.push_back( Point(frame.cols, 0) );
+                        dst_vertices.push_back( Point(0, frame.rows) );
+                        dst_vertices.push_back( Point(frame.cols, frame.rows) );
+
+                        vector<Point2f> src_vertices = getExtremePoints(imgCorregida, framePointsCorregidos, dst_vertices, int(radioPeque*3));
+
+
+                        Mat H = findHomography(src_vertices, dst_vertices);
+
+                        //FRONTO-PARALLEL FOR THE IMAGE
+                        warpPerspective(frontoParallel, frontoParallel, H, frontoParallel.size(), INTER_LINEAR, BORDER_CONSTANT);
+
+                        //FRONTO-PARALLEL FOR THE
+                        vector<Point2f>new_vertices;
+                        perspectiveTransform( framePointsCorregidos, new_vertices, H);
+                        for (size_t i = 0; i < framePointsCorregidos.size(); ++i){
+                            circle(frontoParallel, new_vertices[i], 8, Scalar(100, 0, 100), -1, 8, 0);
+                        }
+
+                        Mat frontoParallel2 = frontoParallel.clone();
+                        Mat binarized2, morphology2, ellipses2, result2;
+                        vector<Point2f> puntosFrontoP;
+                        bool found2 = findRingsGrid2( frontoParallel2, binarized2, morphology2, ellipses2, result2, minRect, patternSize, puntosFrontoP);
+
+                    }
+
+
+
+/*
                     // Procesamiento
                     if(findPattern(frame,binarized,
                                    morphology,ellipses,
@@ -595,7 +626,7 @@ void MainWindow::calibrationRoutine(){
                                                  frame.size(),CV_16SC2, map1, map2);
                         remap(frame, rview, map1, map2, INTER_LINEAR);
 
-/*
+
                         // Fronto-Parallel
                         Mat temp = result.clone();
                         undistort(temp, result, cameraMatrix, distCoeffs);
@@ -618,10 +649,10 @@ void MainWindow::calibrationRoutine(){
                         Mat H = findHomography(src_vertices, dst_vertices);
                         //warpPerspective(view_auxiliary, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
                         warpPerspective(result, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-*/
+
 
                         // Draw
-                        drawWindows(frame,binarized,result,result,rview);
+                        //drawWindows(frame,binarized,result,result,rview);
 
                         //ui->status->setText("Calibrated image");
                         //ui->status->setStyleSheet("QLabel { color : black; }");
@@ -629,7 +660,7 @@ void MainWindow::calibrationRoutine(){
 
                     }
 
-
+*/
 
                 }
             }
@@ -642,48 +673,6 @@ void MainWindow::calibrationRoutine(){
         std::this_thread::sleep_until(timeNext);
         qApp->processEvents();
     }
-
-
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-    outfileAngle   .close();
-    outfileArea    .close();
-    outfilePosition.close();
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-    /*
-
-bool findPattern(cv::Mat &frame     , cv::Mat &binarized,
-                 cv::Mat &morphology, cv::Mat &ellipses ,
-                 cv::Mat &result    ,
-                 cv::RotatedRect &minRec,
-                 vector<Point2f> &framePoints,
-                 QString &type);
-
-    */
-
-
-
-
-
-
-
-    /*
-
-
-    std::cout << "(" <<  cameraMatrix.at<double>(0,0) << ","  <<  cameraMatrix.at<double>(1,1) << ")" << std::endl;
-    std::cout << "(" <<  cameraMatrix.at<double>(0,2) << ","  <<  cameraMatrix.at<double>(1,2) << ")" << std::endl;
-
-    std::cout << "totalAvgErr: " << totalAvgErr << std::endl;
-    */
 }
 
 
@@ -742,8 +731,8 @@ float MainWindow::frameSelection(vector<Point2f> &pts, vector<Point2f> &gridReal
                                         gridSize, windowsize);
     float prob3 = probabilityByAngle   (pts, gridRealPoints);
 
-    cout << "Prob. Time: " << prob0 << ". Prob. Area: " << prob1 << ". Prob. Position: " << prob2 << endl;
-    return prob0*prob1*prob2*prob3;
+    cout << "Prob. Time: " << prob0 << ". Prob. Area: " << prob1 << ". Prob. Position: " << prob2  << ". Prob. Angle: " << prob3 << endl;
+    return prob0*prob1*prob2;//*prob3;
 }
 
 
@@ -769,61 +758,9 @@ float probabilityByAngle(vector<Point2f> &pts,vector<Point2f> &gridRealPoints){
         R.at<double>(i,2) = c3.at<double>(i,0);
     }
 
-    //R /= determinant(R);
-/*
-    cout << "Rotation:" << endl;
-    for(int i=0; i<R.rows; ++i){
-        for(int j=0;j <R.cols; ++j){
-            cout << R.at<double>(i,j) << "\t";
-        }
-        cout << "\n";
-    }
-    cout << endl;
-*/
-
     double trazaR = R.at<double>(0,0) + R.at<double>(1,1) + R.at<double>(2,2);
     double angle = acos( (abs(trazaR)-1)/2 ) * 180.0 / 3.14159265;
-    //cout << "(trazaR-1)/2 )=" << (abs(trazaR)-1)/2  << endl;
-    //cout << "Angle Rotation:" << acos( (abs(trazaR)-1)/2 ) * 180.0 / 3.14159265<< endl;
 
-    /*
-    // Corners Pattern
-    double x1 = double(pts[ 0].x), y1 = double(pts[ 0].y);
-    double x2 = double(pts[ 4].x), y2 = double(pts[ 4].y);
-    double x3 = double(pts[15].x), y3 = double(pts[15].y);
-    double x4 = double(pts[19].x), y4 = double(pts[19].y);
-
-    // Sides Pattern
-    double x21 = sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) );
-    double x31 = sqrt( (x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) );
-    double x42 = sqrt( (x4-x2)*(x4-x2) + (y4-y2)*(y4-y2) );
-    double x43 = sqrt( (x4-x3)*(x4-x3) + (y4-y3)*(y4-y3) );
-
-    double asp431 = double(5.0/4.0)*100/(x43/x31) ;
-    double asp421 = double(5.0/4.0)*100/(x21/x42) ;
-
-    //cout << endl;
-
-    // First angle
-    double a = abs( x42 - x31 );
-    double b =        x43      ;
-    double c =        x21      ;
-
-    double cosA = abs(b*b + c*c - a*a)/(2*b*c);
-    double senAcosA = cosA*sqrt(1 - cosA*cosA);
-
-
-    // Second angle
-    a =        x42      ;
-    b =        x31      ;
-    c = abs( x21 - x43 );
-
-    double cosC = abs(a*a + b*b - c*c)/(2*a*b);
-    double senCcosC = cosC*sqrt(1 - cosC*cosC);
-
-
-    return float( asp431 + asp421 )/2;// float(senAcosA + senCcosC);
-    */
     return float(exp( -(angle-60)*(angle-60)/(24*24) )+exp( -(angle-120)*(angle-120)/(24*24) ));
 }
 

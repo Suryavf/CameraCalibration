@@ -37,6 +37,7 @@ bool runCalibrationAndSave(vector<vector<Point2f> > &imagePoints,
                            double &totalAvgErr);
 
 vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point2f> dst_vertices, int offset);
+void calcBoardCornerPositions(Size boardSize, float squareSize, vector<Point2f>& corners, QString type);
 
 void runCalibrationRuntine();
 

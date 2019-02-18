@@ -299,21 +299,21 @@ int main(int argc, char* argv[]){
     Mat cameraMatrixA = Mat::eye(3, 3, CV_64F);
     Mat distCoeffsA = Mat::eye(5, 1, CV_64F);
 
-    cameraMatrixA.at<double>(0,0) = 6.7105753815332685e+02;
+    cameraMatrixA.at<double>(0,0) = 4.9407097489128887e+02;
     cameraMatrixA.at<double>(0,1) = 0.;
-    cameraMatrixA.at<double>(0,2) = 3.4812408454159686e+02;
+    cameraMatrixA.at<double>(0,2) = 3.2655525310399440e+02;
     cameraMatrixA.at<double>(1,0) = 0.;
-    cameraMatrixA.at<double>(1,1) = 6.7211395550615487e+02;
-    cameraMatrixA.at<double>(1,2) = 2.2366563448217346e+02;
+    cameraMatrixA.at<double>(1,1) = 4.9504077243050222e+02;
+    cameraMatrixA.at<double>(1,2) = 1.7817030432861947e+02;
     cameraMatrixA.at<double>(2,0) = 0.;
     cameraMatrixA.at<double>(2,1) = 0.;
     cameraMatrixA.at<double>(2,2) = 1.;
 
-    distCoeffsA.at<double>(0,0) = -1.9017846270769911e-01;
-    distCoeffsA.at<double>(0,1) = 4.3878665423112384e-01;
-    distCoeffsA.at<double>(0,2) = -2.6477998908462181e-03;
-    distCoeffsA.at<double>(0,3) = -4.0233089422620771e-03;
-    distCoeffsA.at<double>(0,4) = -4.8317048786176681e-01;
+    distCoeffsA.at<double>(0,0) = 1.4891248744989649e-02;
+    distCoeffsA.at<double>(0,1) = -9.5853009373457573e-02;
+    distCoeffsA.at<double>(0,2) = 4.4932223346723409e-03;
+    distCoeffsA.at<double>(0,3) = 5.1907222623575446e-03;
+    distCoeffsA.at<double>(0,4) = 1.2071612562471812e-01;
 
     // =============================== Variables in order to get the rings detection ========================================
 
@@ -324,21 +324,21 @@ int main(int argc, char* argv[]){
     Mat view;
     
     //view = s.nextImage();
-    minRect = cv::RotatedRect(cv::Point(480,         0),
+    minRect = cv::RotatedRect(cv::Point(360,         0),
                               cv::Point(         0,         0),
                               cv::Point(         0,640));
 
     float timeLapse;
     double start_time;
 
-     Mat cloud_points(480, 640, CV_8UC3, Scalar(0,0,0));
+     Mat cloud_points(360, 640, CV_8UC3, Scalar(0,0,0));
 
     // =======================================================================================================================
 
 
 
 // NUMBER OF ITERATIONS
-for (int ite = 0; ite < 10; ++ite)
+for (int ite = 0; ite < 20; ++ite)
 {
     s.atImageList = 0;
     mode = CAPTURING;
@@ -491,8 +491,8 @@ for (int ite = 0; ite < 10; ++ite)
         }
 
         // ============================================ FRAMES ====================================
-        String filename = "/home/laura/Escritorio/Imágenes/Calibration_1/CameraCalibration/Frames_Iterative/frame";
-        String filename2 = "/home/laura/Escritorio/Imágenes/Calibration_1/CameraCalibration/Frames_Color_Iterative/frame";
+        String filename = "/home/victor/Documentos/Imagenes/CameraCalibration/Frames_Iterative/frame";
+        String filename2 = "/home/victor/Documentos/Imagenes/CameraCalibration/Frames_Color_Iterative/frame";
         
         bool color_frame = false;
         //Mat view_auxiliary;
@@ -1887,10 +1887,8 @@ vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point
     new_vertices.push_back( Point(width+offset, 0-offset) );
     new_vertices.push_back( Point(0-offset, height+offset) );
     new_vertices.push_back( Point(width+offset, height+offset) );
-
-
+    
     perspectiveTransform( new_vertices, new_vertices, H.inv());
-
 
     //imshow("Fronto-Parallel-Corto", rotated);
     //waitKey(0);
