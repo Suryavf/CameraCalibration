@@ -39,6 +39,8 @@ bool runCalibrationAndSave(vector<vector<Point2f> > &imagePoints,
 vector<Point2f>getExtremePoints(Mat view, vector<Point2f> pointBuf, vector<Point2f> dst_vertices, int offset);
 void calcBoardCornerPositions(Size boardSize, float squareSize, vector<Point2f>& corners, QString type);
 
+bool findRingsGrid2( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, Mat &result, RotatedRect &minRect, Size &boardSize, vector<Point2f> &puntos);
+
 void runCalibrationRuntine();
 
 #endif // CALIBRATEDGRID_H

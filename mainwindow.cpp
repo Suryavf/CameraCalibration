@@ -361,6 +361,7 @@ void MainWindow::calibrationRoutine(){
     cv::Mat cloudPoints,cloudPointsOut;
     cv::RotatedRect minRect;
 
+    vector<cv::Mat> selectFrames;
     vector<Point3f>  realPoints;
     vector<Point2f> framePoints;
     vector<vector<Point2f> > calibratePoints;
@@ -471,6 +472,7 @@ void MainWindow::calibrationRoutine(){
 
                         // Save points
                         calibratePoints.push_back(framePoints);
+                        selectFrames   .push_back(frame      );
 
                         // Draw points
                         for (size_t i = 0; i < framePoints.size(); ++i)
@@ -532,7 +534,9 @@ void MainWindow::calibrationRoutine(){
                     float sqSize = float(squareSize);
                     Size imageSize = frame.size();
 
-                    // Calibrated
+                    //
+                    // Basic Calibrated
+                    // ----------------
                     runCalibrationAndSave(calibratePoints,
                                           type,sqSize,
                                           patternSize,imageSize,
@@ -546,6 +550,150 @@ void MainWindow::calibrationRoutine(){
                                                 + "," + QString::number( cameraMatrix.at<double>(1,2) ) + ")" );
                     ui->totalAvgErr->setText(  QString::number( totalAvgErr ) );
 
+
+                    //
+                    // Iterative method
+                    // ----------------
+                    if(type == "Ring grid"){
+
+                        size_t n_iteration = 50;
+                        for (size_t ite = 0; ite < n_iteration; ++ite){
+
+                            // Loop images
+                            for(size_t s = 0; s < selectFrames.size(); ++s){
+                                // Select Frame
+                                frame = selectFrames[s];
+                                vector<Point2f> puntosOriginales = calibratePoints[s];
+
+                                // Fin pattern
+                                findPattern(frame,binarized, morphology,ellipses,result,patternSize,
+                                            minRect,framePoints,type,countPoints,timeLapse);
+
+                                // Un-distorting
+                                imgCorregida = frame.clone();
+                                undistort(frame, framePoints, cameraMatrix, distCoeffs);
+
+                                Mat imgCorregida2 = imgCorregida.clone();
+
+                                vector<Point2f> framePointsCorregidos;
+                                undistortPoints(puntosOriginales, framePointsCorregidos, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix); // ------ ???
+                                drawChessboardCorners( imgCorregida, patternSize, Mat(framePointsCorregidos), true );
+
+                                //---------Obteniendo Fronto-Parallel-------------
+                                float radioPeque = frame.cols/24;
+                                vector<Point2f> dst_vertices;
+                                dst_vertices.push_back( Point(0, 0) );
+                                dst_vertices.push_back( Point(frame.cols,          0) );
+                                dst_vertices.push_back( Point(         0, frame.rows) );
+                                dst_vertices.push_back( Point(frame.cols, frame.rows) );
+
+                                vector<Point2f> src_vertices = getExtremePoints(imgCorregida, framePointsCorregidos, dst_vertices, int(radioPeque*3));
+
+                                Mat H = findHomography(src_vertices, dst_vertices);
+
+
+                                //FRONTO-PARALLEL FOR THE IMAGE
+                                warpPerspective(imgCorregida2, frontoParallel, H, frontoParallel.size(), INTER_LINEAR, BORDER_CONSTANT);
+
+                                //FRONTO-PARALLEL FOR THE
+                                vector<Point2f>new_vertices;
+                                perspectiveTransform( framePointsCorregidos, new_vertices, H);
+                                for (size_t i = 0; i < framePointsCorregidos.size(); ++i){
+                                    circle(frontoParallel, new_vertices[i], 8, Scalar(100, 0, 100), -1, 8, 0);
+                                }
+
+                                Mat frontoParallel2 = frontoParallel.clone();
+                                Mat binarized2, morphology2, ellipses2, result2;
+                                vector<Point2f> puntosFrontoP;
+                                bool found2 = findRingsGrid2( frontoParallel2, binarized2, morphology2, ellipses2, result2, minRect, patternSize, puntosFrontoP);
+
+                                if (found2){
+                                    drawChessboardCorners( frontoParallel2, patternSize, Mat(puntosFrontoP), found2 );
+                                }
+
+
+                                vector<Point2f> pointBof_result;
+                                if (found2){
+                                    float x;
+                                    float y;
+                                    for (size_t i = 0; i < puntosFrontoP.size(); ++i){
+                                        x = puntosFrontoP[i].x;
+                                        y = puntosFrontoP[i].y;
+
+                                        pointBof_result.push_back(Point2f(x,y));
+                                    }
+                                }
+                                else{
+                                    for (size_t i = 0; i < new_vertices.size(); ++i){
+
+                                        pointBof_result.push_back(new_vertices[i]);
+                                    }
+                                }
+
+
+                                drawChessboardCorners( frontoParallel, patternSize, Mat(pointBof_result), true );
+                                //imshow("FRONTO-PARALLEL IMAGE", frontoParallel);
+
+                                //return point to original image corregida
+                                perspectiveTransform( pointBof_result, pointBof_result, H.inv());
+                                drawChessboardCorners( imgCorregida2, patternSize, Mat(pointBof_result), true );
+                                //imshow("Retutn Imagen Corregida", imgCorregida2);
+
+                                //--------Regresando los puntos a la imagen con distorcion, osea a la capturada por la camara
+                                float xDist, yDist, x, y;
+                                float k1 = float(distCoeffs.at<double>(0,0));
+                                float k2 = float(distCoeffs.at<double>(0,1));
+                                float k3 = float(  distCoeffs.at<double>(0,4));
+                                float cx = float(cameraMatrix.at<double>(0,2));
+                                float cy = float(cameraMatrix.at<double>(1,2));
+                                float fx = float(cameraMatrix.at<double>(0,0));
+                                float fy = float(cameraMatrix.at<double>(1,1));
+                                float r;
+
+                                for(uint i=0; i<pointBof_result.size(); i++){
+                                    x = (pointBof_result[i].x-cx)/fx;
+                                    y = (pointBof_result[i].y-cy)/fy;
+                                    r = sqrt(x*x+y*y);
+
+                                    xDist = x*( 1 + k1*float(pow(r,2)) + k2*float(pow(r,4)) + k3*float(pow(r,6)) );
+                                    yDist = y*( 1 + k1*float(pow(r,2)) + k2*float(pow(r,4)) + k3*float(pow(r,6)) );
+
+                                    xDist = xDist * fx + cx;
+                                    yDist = yDist * fy + cy;
+
+                                    pointBof_result[i].x = xDist;
+                                    pointBof_result[i].y = yDist;
+                                }
+
+
+                                vector<Point2f> pointBof_result_Final;
+                                for (size_t i = 0; i < pointBof_result.size(); ++i){
+                                    float x = (pointBof_result[i].x + puntosOriginales[i].x)/2;
+                                    float y = (pointBof_result[i].y + puntosOriginales[i].y)/2;
+
+                                    //x = pointBof_result[i].x;
+                                    //y = pointBof_result[i].y;
+
+                                    pointBof_result_Final.push_back(Point2f(x,y));
+                                }
+
+                                calibratePoints[s].clear();
+                                calibratePoints[s] = pointBof_result_Final;
+
+                            }
+
+                            // Update text
+                            ui->status->setText("Iteration " + QString::number(ite) + "/" + QString::number(n_iteration));
+                            ui->focalLength   ->setText(  "(" + QString::number( cameraMatrix.at<double>(0,0) )
+                                                        + "," + QString::number( cameraMatrix.at<double>(1,1) ) + ")" );
+                            ui->principalPoint->setText(  "(" + QString::number( cameraMatrix.at<double>(0,2) )
+                                                        + "," + QString::number( cameraMatrix.at<double>(1,2) ) + ")" );
+                            ui->totalAvgErr->setText(  QString::number( totalAvgErr ) );
+
+                        }
+
+                    }
+
                     ui->status->setText("Calibrated image");
                     ui->status->setStyleSheet("QLabel { color : black; }");
 
@@ -553,114 +701,9 @@ void MainWindow::calibrationRoutine(){
                 }
 
             //
-            //- Post-Calibrate
+            //- Ready rutine
             //  -----------------
-                else{
-
-                    if(type == "Ring grid" && findPattern(frame,binarized,
-                                                          morphology,ellipses,
-                                                          result,
-                                                          patternSize,
-                                                          minRect,
-                                                          framePoints,type,
-                                                          countPoints,
-                                                          timeLapse) ){
-                        // Un-distorting
-                        imgCorregida = frame.clone();
-                        undistort(frame, framePoints, cameraMatrix, distCoeffs);
-
-                        frontoParallel = imgCorregida.clone();
-
-                        vector<Point2f> framePointsCorregidos;
-                        undistortPoints(calibratePoints, framePointsCorregidos, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix);
-                        drawChessboardCorners( imgCorregida, patternSize, Mat(framePointsCorregidos), true );
-
-
-                        //---------Obteniendo Fronto-Parallel-------------
-                        float radioPeque = frame.cols/24;
-                        vector<Point2f> dst_vertices;
-                        dst_vertices.push_back( Point(0, 0) );
-                        dst_vertices.push_back( Point(frame.cols, 0) );
-                        dst_vertices.push_back( Point(0, frame.rows) );
-                        dst_vertices.push_back( Point(frame.cols, frame.rows) );
-
-                        vector<Point2f> src_vertices = getExtremePoints(imgCorregida, framePointsCorregidos, dst_vertices, int(radioPeque*3));
-
-
-                        Mat H = findHomography(src_vertices, dst_vertices);
-
-                        //FRONTO-PARALLEL FOR THE IMAGE
-                        warpPerspective(frontoParallel, frontoParallel, H, frontoParallel.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-                        //FRONTO-PARALLEL FOR THE
-                        vector<Point2f>new_vertices;
-                        perspectiveTransform( framePointsCorregidos, new_vertices, H);
-                        for (size_t i = 0; i < framePointsCorregidos.size(); ++i){
-                            circle(frontoParallel, new_vertices[i], 8, Scalar(100, 0, 100), -1, 8, 0);
-                        }
-
-                        Mat frontoParallel2 = frontoParallel.clone();
-                        Mat binarized2, morphology2, ellipses2, result2;
-                        vector<Point2f> puntosFrontoP;
-                        bool found2 = findRingsGrid2( frontoParallel2, binarized2, morphology2, ellipses2, result2, minRect, patternSize, puntosFrontoP);
-
-                    }
-
-
-
-/*
-                    // Procesamiento
-                    if(findPattern(frame,binarized,
-                                   morphology,ellipses,
-                                   result,
-                                   patternSize,
-                                   minRect,
-                                   framePoints,type,
-                                   countPoints,
-                                   timeLapse)){
-
-                        // Calcular imagen rectificada (undistorted)
-                        Mat rview, map1, map2;
-                        Mat opt = getOptimalNewCameraMatrix(cameraMatrix, distCoeffs, frame.size(), 0.9);
-                        initUndistortRectifyMap( cameraMatrix, distCoeffs, Mat(), opt,
-                                                 frame.size(),CV_16SC2, map1, map2);
-                        remap(frame, rview, map1, map2, INTER_LINEAR);
-
-
-                        // Fronto-Parallel
-                        Mat temp = result.clone();
-                        undistort(temp, result, cameraMatrix, distCoeffs);
-
-                        float radioPeque = float(result.cols)/24.0f;
-                        vector<Point2f> dst_vertices;
-                        dst_vertices.push_back( Point(0, 0) );
-                        dst_vertices.push_back( Point(result.cols, 0) );
-                        dst_vertices.push_back( Point(0, result.rows) );
-                        dst_vertices.push_back( Point(result.cols, result.rows) );
-
-                        vector<Point2f> src_vertices = getExtremePoints(result, framePoints, dst_vertices, int(radioPeque*3));
-
-                        for(size_t i=0; i < src_vertices.size(); i++){
-                            circle(result, src_vertices[i], 4,cv::Scalar(35,255,75), -1, 8, 0);
-                        }
-                        radioPeque = float(result.cols)/30.0f;
-
-                        Mat rotated;
-                        Mat H = findHomography(src_vertices, dst_vertices);
-                        //warpPerspective(view_auxiliary, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-                        warpPerspective(result, rotated, H, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-
-                        // Draw
-                        //drawWindows(frame,binarized,result,result,rview);
-
-                        //ui->status->setText("Calibrated image");
-                        //ui->status->setStyleSheet("QLabel { color : black; }");
-
-
-                    }
-
-*/
+                else {
 
                 }
             }
@@ -761,7 +804,7 @@ float probabilityByAngle(vector<Point2f> &pts,vector<Point2f> &gridRealPoints){
     double trazaR = R.at<double>(0,0) + R.at<double>(1,1) + R.at<double>(2,2);
     double angle = acos( (abs(trazaR)-1)/2 ) * 180.0 / 3.14159265;
 
-    return float(exp( -(angle-60)*(angle-60)/(24*24) )+exp( -(angle-120)*(angle-120)/(24*24) ));
+    return float(exp( -(angle-60)*(angle-60)/(2*24*24) )+exp( -(angle-120)*(angle-120)/(2*24*24) ));
 }
 
 

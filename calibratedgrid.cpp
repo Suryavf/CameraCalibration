@@ -2273,8 +2273,7 @@ bool findRingsGrid( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, M
 
 }
 
-bool findRingsGrid2( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, Mat &result, RotatedRect &minRect, Size &boardSize, vector<Point2f> &puntos)
-{
+bool findRingsGrid2( Mat &view, Mat &binarized, Mat &morphology, Mat &ellipses, Mat &result, RotatedRect &minRect, Size &boardSize, vector<Point2f> &puntos){
     int ellipseCount = 0;
     gridDetection2(view, binarized, morphology, ellipses, result, minRect, ellipseCount, puntos);
 
